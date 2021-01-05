@@ -1,6 +1,6 @@
 //! # Mongo
 //!
-//! The `mongo` crate aims to provide a convenient, higher-level wrapper on top of the official
+//! The `mongod` crate aims to provide a convenient, higher-level wrapper on top of the official
 //! `bson` & `mongodb` crates.
 //!
 //! It provides the following:
