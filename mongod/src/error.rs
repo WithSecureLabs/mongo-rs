@@ -106,10 +106,15 @@ impl From<crate::ext::bson::ser::Error> for Error {
 /// The `Kind` of `mongod::Error`.
 #[derive(Debug)]
 pub enum Kind {
+    /// Error that originated from the `bson` crate
     Bson,
+    /// Error that occurred when building a builder
     Builder,
+    /// Error that originated from the `mongodb` crate
     Mongodb,
+    /// Error that occurred when creating a runtime
     Runtime,
+    /// Error that occurred when converting to or from a BSON `Document`
     InvalidDocument,
 }
 

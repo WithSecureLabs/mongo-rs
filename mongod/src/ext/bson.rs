@@ -18,6 +18,7 @@ pub mod de {
     use std::error::Error as StdError;
     use std::fmt;
 
+    /// An error that extends `bson`'s deserialisation error.
     pub struct Error(pub bson::de::Error);
 
     impl fmt::Debug for Error {
@@ -58,6 +59,7 @@ pub mod ser {
     use std::error::Error as StdError;
     use std::fmt;
 
+    /// An error that extends `bson`'s serialisation error.
     pub struct Error(pub bson::ser::Error);
 
     impl fmt::Debug for Error {

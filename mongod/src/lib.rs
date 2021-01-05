@@ -205,13 +205,13 @@
 //! [bson]: https://docs.rs/bson
 //! [client]: ./struct.Client.html
 //! [chrono]: https://docs.rs/chrono
-//! [derive]: ../mongo_derive/index.html
+//! [derive]: ../mongod_derive/index.html
 //! [ext-bson]: ./ext/bson/index.html
 //! [schema]: ./schema/index.html
 //! [cargo-features]: https://doc.rust-lang.org/stable/cargo/reference/manifest.html#the-features-section
 
-//#![deny(missing_docs)]
-//#![deny(unused_imports)]
+#![deny(missing_docs)]
+#![deny(unused_imports)]
 
 #[macro_use]
 pub extern crate bson;

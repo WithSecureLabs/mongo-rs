@@ -177,6 +177,7 @@ pub struct Updates<U: Update> {
 }
 
 impl<U: Update> Updates<U> {
+    /// Convert `Updates` into a BSON `Document`.
     pub fn into_document(self) -> Result<Document, Error> {
         let mut document = crate::bson::Document::new();
         if let Some(set) = self.set {
