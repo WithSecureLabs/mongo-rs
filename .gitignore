@@ -1,0 +1,8 @@
+# Rust
+target
+
+# Sublime
+*.sublime-workspace*
+
+# Vim
+*.sw*
