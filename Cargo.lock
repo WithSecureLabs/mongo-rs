@@ -816,14 +816,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "mongo"
+name = "mongod"
 version = "0.1.0"
 dependencies = [
  "bson",
  "chrono",
  "futures",
  "log",
- "mongo-derive",
+ "mongod-derive",
  "mongodb",
  "serde",
  "tokio",
@@ -831,11 +831,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "mongo-derive"
+name = "mongod-derive"
 version = "0.1.0"
 dependencies = [
  "Inflector",
- "mongo",
+ "mongod",
  "proc-macro2 1.0.24",
  "quote 1.0.7",
  "syn 1.0.54",

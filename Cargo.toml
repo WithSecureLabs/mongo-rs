@@ -1,5 +1,5 @@
 [workspace]
 members = [
-  "mongo",
-  "mongo-derive",
+  "mongod",
+  "mongod-derive",
 ]
