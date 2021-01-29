@@ -414,14 +414,14 @@ fn impl_struct_try_from_bson_field(f: &Field) -> TokenStream {
     let ty = &f.ty;
     if f.attrs.serde {
         quote! {
-            if let Some(value) = doc.remove(#id) {
-                #member = Some(_mongo::bson::from_bson(value)?);
+            if let Some(__value) = doc.remove(#id) {
+                #member = Some(_mongo::bson::from_bson(__value)?);
             }
         }
     } else if optional {
         quote! {
-            if let Some(value) = doc.remove(#id) {
-                let wrap = _mongo::ext::bson::Bson(value);
+            if let Some(__value) = doc.remove(#id) {
+                let wrap = _mongo::ext::bson::Bson(__value);
                 let opt = match Option::<_mongo::bson::Bson>::from(wrap) {
                     Some(v) => Some(_mongo::ext::bson::Bson(v).try_into()?),
                     None => None,
@@ -431,8 +431,8 @@ fn impl_struct_try_from_bson_field(f: &Field) -> TokenStream {
         }
     } else {
         quote! {
-            if let Some(value) = doc.remove(#id) {
-                let wrap = _mongo::ext::bson::Bson(value);
+            if let Some(__value) = doc.remove(#id) {
+                let wrap = _mongo::ext::bson::Bson(__value);
                 #member = Some(<#ty>::try_from(wrap)?);
             }
         }
