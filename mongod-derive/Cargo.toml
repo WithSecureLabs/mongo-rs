@@ -17,7 +17,10 @@ quote = "1.0"
 syn = "1.0"
 
 [dev-dependencies]
-mongod = { version = "0.1.1", path = "../mongod" }
+# FIXME: Require nesting until we can work out a way to do nested deriving
+# cleanly...
+#mongod = { version = "0.1.1", path = "../mongod" }
+mongod = { version = "0.1.1", path = "../mongod", features = ["derive"] }
 
 [lib]
 proc-macro = true
