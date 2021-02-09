@@ -241,20 +241,50 @@ fn impl_struct(
     };
 
     let update = if attrs.update {
-        let (derive, into) = if attrs.bson == attr::BsonMode::Serde {
+        let (derive, bson, into) = if attrs.bson == attr::BsonMode::Serde {
             (
                 quote! {
                     #[derive(Default, _serde::Serialize)]
                 },
+                quote! {},
                 quote! {
                         let b = _mongo::bson::to_bson(&self).map_err(_mongo::Error::invalid_document)?;
                 },
             )
         } else {
+            let into_bson = fields.iter().filter_map(|f| {
+                if f.attrs.skip {
+                    return None;
+                }
+                let member = &f.member;
+                let id = member_to_id(&f.member);
+                Some(quote! {
+                    if let Some(__value) = value.#member {
+                        doc.insert(#id, _mongo::ext::bson::Bson::try_from(__value)?.0);
+                    }
+                })
+            });
             (
                 quote! {
-                    #[derive(Default, _mongo::Bson)]
-                    #[bson(into)]
+                    #[derive(Default)]
+                },
+                quote! {
+                    #[automatically_derived]
+                    impl TryFrom<Update> for _mongo::bson::Bson {
+                        type Error = _mongo::ext::bson::ser::Error;
+                        fn try_from(value: Update) -> Result<Self, Self::Error> {
+                            let mut doc = _mongo::bson::Document::new();
+                            #(#into_bson)*
+                            Ok(_mongo::bson::Bson::Document(doc))
+                        }
+                    }
+                    #[automatically_derived]
+                    impl TryFrom<Update> for _mongo::ext::bson::Bson {
+                        type Error = _mongo::ext::bson::ser::Error;
+                        fn try_from(value: Update) -> Result<Self, Self::Error> {
+                            Ok(_mongo::ext::bson::Bson(_mongo::bson::Bson::try_from(value)?))
+                        }
+                    }
                 },
                 quote! {
                         let b = _mongo::bson::Bson::try_from(self).map_err(_mongo::Error::invalid_document)?;
@@ -271,11 +301,19 @@ fn impl_struct(
                 _ => panic!("#[derive(Mongo)] can only be derived on named structs"),
             };
             // Pass the attrs along so we can just derive the bson...
-            let attrs = &f.raw.attrs;
-            Some(quote! {
-                #(#attrs),*
-                pub #name: Option<#ty>
-            })
+            let raw_attrs = &f.raw.attrs;
+            if attrs.bson == attr::BsonMode::Serde {
+                Some(quote! {
+                    #(#raw_attrs),*
+                    #[serde(skip_serializing_if="Option::is_none")]
+                    pub #name: Option<#ty>
+                })
+            } else {
+                Some(quote! {
+                    #(#raw_attrs),*
+                    pub #name: Option<#ty>
+                })
+            }
         });
         let into_update = fields.iter().filter_map(|f| {
             if f.attrs.skip {
@@ -295,6 +333,7 @@ fn impl_struct(
             pub struct Update {
                 #(#update_fields),*
             }
+            #bson
             #[automatically_derived]
             impl _mongo::Update for Update {
                 fn new() -> Self {
