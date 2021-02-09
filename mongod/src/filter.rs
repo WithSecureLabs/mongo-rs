@@ -27,6 +27,8 @@ where
     Ne(T),
     /// Matches none of the values specified in an array.
     Nin(Vec<T>),
+    /// Matches values that are equal to null.
+    Null,
 }
 
 impl<T> TryFrom<Comparator<T>> for Bson
@@ -59,6 +61,7 @@ where
                     .map_err(|e| e.into())?;
                 bson!({ "$nin": Bson::Array(int.into_iter().map(|b| b.0).collect()) })
             }
+            Comparator::Null => Bson::Null,
         })
     }
 }
