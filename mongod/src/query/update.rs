@@ -15,7 +15,7 @@ use crate::update::{AsUpdate, Updates};
 /// Updates some documents in a collection.
 ///
 /// ```no_run
-/// # use mongod::{Bson, Mongo};
+/// # use mongod_derive::{Bson, Mongo};
 /// #[derive(Bson, Mongo)]
 /// #[mongo(collection="users", field, filter, update)]
 /// pub struct User {

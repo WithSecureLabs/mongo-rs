@@ -9,7 +9,7 @@ use crate::error::Error;
 /// Tying `User` to its `Update`.
 ///
 /// ```
-/// # use mongod::{Bson, Mongo};
+/// # use mongod_derive::{Bson, Mongo};
 /// use mongod::bson::Document;
 /// use mongod::{AsUpdate, Error, Update};
 ///
@@ -101,7 +101,7 @@ pub trait Update {
 /// Unset the age of a user.
 ///
 /// ```no_run
-/// # use mongod::{Bson, Mongo};
+/// # use mongod_derive::{Bson, Mongo};
 /// use mongod::bson::Document;
 /// use mongod::{AsFilter, AsUpdate, Comparator, Error, Update, Updates};
 ///
