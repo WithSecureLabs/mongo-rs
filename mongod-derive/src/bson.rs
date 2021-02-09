@@ -452,7 +452,7 @@ fn is_option(ty: &Type) -> bool {
     false
 }
 
-fn member_to_id(member: &Member) -> String {
+pub fn member_to_id(member: &Member) -> String {
     match member {
         Member::Named(name) => to_snake_case(&name.to_string()),
         Member::Unnamed(idx) => idx.index.to_string(),

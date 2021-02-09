@@ -5,6 +5,7 @@ use quote::{quote, ToTokens};
 use syn::{Ident, Member};
 
 use crate::ast::{attr, Container, Data, Field, Style};
+use crate::bson::member_to_id;
 
 pub fn expand_derive_mongo(input: &syn::DeriveInput) -> Result<TokenStream, Vec<syn::Error>> {
     let container = Container::from(input)?;
@@ -159,6 +160,18 @@ fn impl_struct(
                 pub #name: Option<_mongo::Comparator<#inner>>
             })
         });
+        let into_bson = fields.iter().filter_map(|f| {
+            if f.attrs.skip {
+                return None;
+            }
+            let member = &f.member;
+            let id = member_to_id(&f.member);
+            Some(quote! {
+                if let Some(__value) = value.#member {
+                    doc.insert(#id, _mongo::ext::bson::Bson::try_from(__value)?.0);
+                }
+            })
+        });
         let into_filter = fields.iter().filter_map(|f| {
             if f.attrs.skip {
                 return None;
@@ -178,10 +191,25 @@ fn impl_struct(
         });
         quote! {
             #[automatically_derived]
-            #[derive(Default, _mongo::Bson)]
-            #[bson(into)]
+            #[derive(Default)]
             pub struct Filter {
                 #(#filter_fields),*
+            }
+            #[automatically_derived]
+            impl TryFrom<Filter> for _mongo::bson::Bson {
+                type Error = _mongo::ext::bson::ser::Error;
+                fn try_from(value: Filter) -> Result<Self, Self::Error> {
+                    let mut doc = _mongo::bson::Document::new();
+                    #(#into_bson)*
+                    Ok(_mongo::bson::Bson::Document(doc))
+                }
+            }
+            #[automatically_derived]
+            impl TryFrom<Filter> for _mongo::ext::bson::Bson {
+                type Error = _mongo::ext::bson::ser::Error;
+                fn try_from(value: Filter) -> Result<Self, Self::Error> {
+                    Ok(_mongo::ext::bson::Bson(_mongo::bson::Bson::try_from(value)?))
+                }
             }
             #[automatically_derived]
             impl _mongo::Filter for Filter {
