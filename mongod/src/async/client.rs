@@ -137,6 +137,16 @@ impl Client {
         ClientBuilder::new()
     }
 
+    /// Constructs a new `Client` using a `mongodb::Client`.
+    pub fn from_client<I: Into<String>>(client: mongodb::Client, database: I) -> Self {
+        Self {
+            inner: Arc::new(ClientInner {
+                client,
+                database: database.into(),
+            }),
+        }
+    }
+
     /// Returns the `mongodb::Client`
     pub fn client(&self) -> mongodb::Client {
         self.inner.client.to_owned()

@@ -44,7 +44,7 @@ impl ClientBuilder {
     /// This method fails if the `mongodb::Client` cannot be initialised.
     pub fn build(self) -> crate::Result<Client> {
         Ok(Client {
-            inner: Arc::new(ClientInner::new(self)?),
+            inner: Arc::new(ClientInner::new(self, None)?),
         })
     }
 
@@ -142,6 +142,19 @@ impl Client {
     /// This is the same as `ClientBuilder::new()`.
     pub fn builder() -> ClientBuilder {
         ClientBuilder::new()
+    }
+
+    /// Constructs a new `Client` using a `mongodb::Client`.
+    pub fn from_client<I: Into<String>>(
+        client: mongodb::Client,
+        database: I,
+    ) -> crate::Result<Self> {
+        Ok(Self {
+            inner: Arc::new(ClientInner::new(
+                ClientBuilder::new(),
+                Some(crate::r#async::Client::from_client(client, database)),
+            )?),
+        })
     }
 
     /// Convenience method to delete documents from a collection using a given filter.
@@ -366,7 +379,7 @@ impl Client {
 }
 
 impl ClientInner {
-    fn new(builder: ClientBuilder) -> crate::Result<Self> {
+    fn new(builder: ClientBuilder, client: Option<crate::r#async::Client>) -> crate::Result<Self> {
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<(Request, OneshotResponse)>();
         let (spawn_tx, spawn_rx) = std::sync::mpsc::channel::<crate::Result<()>>();
         let handle = thread::Builder::new()
@@ -387,14 +400,17 @@ impl ClientInner {
                     }
                 };
                 let f = async move {
-                    let client = match builder.builder.build().map_err(crate::error::builder) {
-                        Ok(client) => client,
-                        Err(e) => {
-                            if let Err(e) = spawn_tx.send(Err(e)) {
-                                error!("failed to create async client: {:?}", e);
+                    let client = match client {
+                        Some(client) => client,
+                        None => match builder.builder.build().map_err(crate::error::builder) {
+                            Ok(client) => client,
+                            Err(e) => {
+                                if let Err(e) = spawn_tx.send(Err(e)) {
+                                    error!("failed to create async client: {:?}", e);
+                                }
+                                return;
                             }
-                            return;
-                        }
+                        },
                     };
                     if let Err(e) = spawn_tx.send(Ok(())) {
                         error!("failed to communicate successful startup: {:?}", e);
