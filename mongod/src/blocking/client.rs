@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::sync::Arc;
 use std::thread;
 
@@ -48,13 +49,68 @@ impl ClientBuilder {
         })
     }
 
+    /// Sets the username/password that should be used by this client.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # async fn doc() -> Result<(), mongod::Error> {
+    ///     let _client = mongod::blocking::Client::builder()
+    ///         .auth("foo", Some("bar"))
+    ///         .build().unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn auth<U, P>(mut self, username: U, password: Option<P>) -> Self
+    where
+        U: Display,
+        P: Display,
+    {
+        self.builder = self.builder.auth(username, password);
+        self
+    }
+
+    /// Sets the CA file that should be used by this client for TLS.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # async fn doc() -> Result<(), mongod::Error> {
+    ///     let _client = mongod::blocking::Client::builder()
+    ///         .ca("./certs/foo.pem")
+    ///         .build().unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn ca<I: Into<String>>(mut self, path: I) -> Self {
+        self.builder = self.builder.ca(path);
+        self
+    }
+
+    /// Sets the certificate file that should be used by this client for identification.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # async fn doc() -> Result<(), mongod::Error> {
+    ///     let _client = mongod::blocking::Client::builder()
+    ///         .cert_key("./certs/foo.pem")
+    ///         .build().unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn cert_key<I: Into<String>>(mut self, path: I) -> Self {
+        self.builder = self.builder.cert_key(path);
+        self
+    }
+
     /// Sets the database that should be used by this client.
     ///
     /// # Example
     ///
     /// ```rust
     /// # async fn doc() -> Result<(), mongod::Error> {
-    ///     let _client = mongod::Client::builder()
+    ///     let _client = mongod::blocking::Client::builder()
     ///         .database("foo")
     ///         .build().unwrap();
     /// # Ok(())
@@ -71,7 +127,7 @@ impl ClientBuilder {
     ///
     /// ```rust
     /// # async fn doc() -> Result<(), mongod::Error> {
-    ///     let _client = mongod::Client::builder()
+    ///     let _client = mongod::blocking::Client::builder()
     ///         .uri("mongodb://foo")
     ///         .build()?;
     /// # Ok(())

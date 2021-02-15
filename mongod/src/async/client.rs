@@ -1,8 +1,10 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::sync::Arc;
 
 use bson::oid::ObjectId;
 use futures::StreamExt;
+use mongodb::options::{Credential, Tls, TlsOptions};
 use url::Url;
 
 use crate::collection::Collection;
@@ -12,8 +14,12 @@ use crate::update::{AsUpdate, Update, Updates};
 
 /// A `ClientBuilder` can be used to create a `Client` with custom configuration.
 pub struct ClientBuilder {
+    ca: Option<String>,
+    cert_key: Option<String>,
     database: Option<String>,
+    password: Option<String>,
     uri: Option<String>,
+    username: Option<String>,
 }
 
 impl Default for ClientBuilder {
@@ -28,8 +34,12 @@ impl ClientBuilder {
     /// This is the same as `Client::Builder()`.
     pub fn new() -> Self {
         Self {
+            ca: None,
+            cert_key: None,
             database: None,
+            password: None,
             uri: None,
+            username: None,
         }
     }
 
@@ -45,18 +55,96 @@ impl ClientBuilder {
             .unwrap_or_else(|| String::from("mongodb://127.0.0.1:27017"));
 
         // Init the client
+        let mut credential = None;
+        if self.username.is_some() {
+            credential = Some(
+                Credential::builder()
+                    .username(self.username)
+                    .password(self.password)
+                    .build(),
+            );
+        }
+        let mut tls = None;
+        if self.ca.is_some() || self.cert_key.is_some() {
+            tls = Some(Tls::Enabled(
+                TlsOptions::builder()
+                    .ca_file_path(self.ca)
+                    .cert_key_file_path(self.cert_key)
+                    .build(),
+            ));
+        }
         let url = Url::parse(&uri).map_err(crate::error::builder)?;
         let options = mongodb::options::ClientOptions::builder()
             .hosts(vec![mongodb::options::StreamAddress {
                 hostname: url.host_str().unwrap_or("127.0.0.1").to_owned(),
                 port: url.port(),
             }])
+            .credential(credential)
+            .tls(tls)
             .build();
         let client = mongodb::Client::with_options(options).map_err(crate::error::builder)?;
 
         Ok(Client {
             inner: Arc::new(ClientInner { client, database }),
         })
+    }
+
+    /// Sets the username/password that should be used by this client.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # async fn doc() -> Result<(), mongod::Error> {
+    ///     let _client = mongod::Client::builder()
+    ///         .auth("foo", Some("bar"))
+    ///         .build().unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn auth<U, P>(mut self, username: U, password: Option<P>) -> Self
+    where
+        U: Display,
+        P: Display,
+    {
+        self.username = Some(username.to_string());
+        if let Some(password) = password {
+            self.password = Some(password.to_string());
+        }
+        self
+    }
+
+    /// Sets the CA file that should be used by this client for TLS.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # async fn doc() -> Result<(), mongod::Error> {
+    ///     let _client = mongod::Client::builder()
+    ///         .ca("./certs/foo.pem")
+    ///         .build().unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn ca<I: Into<String>>(mut self, path: I) -> Self {
+        self.ca = Some(path.into());
+        self
+    }
+
+    /// Sets the certificate file that should be used by this client for identification.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # async fn doc() -> Result<(), mongod::Error> {
+    ///     let _client = mongod::Client::builder()
+    ///         .cert_key("./certs/foo.pem")
+    ///         .build().unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn cert_key<I: Into<String>>(mut self, path: I) -> Self {
+        self.cert_key = Some(path.into());
+        self
     }
 
     /// Sets the database that should be used by this client.
