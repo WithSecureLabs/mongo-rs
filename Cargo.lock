@@ -719,7 +719,7 @@ dependencies = [
 
 [[package]]
 name = "mongod"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "bson",
  "chrono",
@@ -734,7 +734,7 @@ dependencies = [
 
 [[package]]
 name = "mongod-derive"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "Inflector",
  "mongod",
