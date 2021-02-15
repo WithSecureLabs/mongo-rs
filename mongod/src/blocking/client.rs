@@ -441,8 +441,7 @@ impl ClientInner {
         let handle = thread::Builder::new()
             .name("mongo-blocking-runtime".into())
             .spawn(move || {
-                let mut rt = match tokio::runtime::Builder::new()
-                    .basic_scheduler()
+                let rt = match tokio::runtime::Builder::new_current_thread()
                     .enable_all()
                     .build()
                     .map_err(crate::error::builder)

@@ -4,7 +4,7 @@ use mongod;
 pub fn setup() {
     // FIXME: Until we impl database and collection on the blocking client we have to spawn in a
     // runtime...
-    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async_setup());
 }
 

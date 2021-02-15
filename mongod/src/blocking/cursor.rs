@@ -1,5 +1,5 @@
 use bson::Document;
-use tokio::stream::StreamExt;
+use futures::stream::StreamExt;
 
 #[derive(Debug)]
 enum Request {

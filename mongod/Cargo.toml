@@ -20,10 +20,10 @@ bson = { version = "1.1", features = ["u2i"] }
 chrono = { version = "0.4", optional = true, features = ["serde"] }
 futures = "0.3"
 log = "0.4"
-mongodb = "1.0"
+mongodb = "2.0.0-alpha"
 mongod-derive = { version = "=0.1.2", optional = true, path = "../mongod-derive" }
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "0.2", default-features = false, features = ["stream"] }
+tokio = { version = "1.0", default-features = false }
 url = "2.2"
 
 
@@ -33,5 +33,5 @@ mongod-derive = { version = "0.1.2", path = "../mongod-derive" }
 
 [features]
 default = []
-blocking = ["tokio/rt-core", "tokio/sync"]
+blocking = ["tokio/rt", "tokio/sync"]
 derive = ["mongod-derive"]
