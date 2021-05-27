@@ -1,10 +1,15 @@
 use std::collections::HashMap;
 use std::fmt::Display;
+use std::str::FromStr;
 use std::sync::Arc;
+use std::time::Duration;
 
 use bson::oid::ObjectId;
 use futures::StreamExt;
-use mongodb::options::{Credential, Tls, TlsOptions};
+use mongodb::options::{
+    Acknowledgment, AuthMechanism, Credential, ReadConcern, ReadConcernLevel, ReadPreference,
+    ReadPreferenceOptions, SelectionCriteria, Tls, TlsOptions, WriteConcern,
+};
 use url::Url;
 
 use crate::collection::Collection;
@@ -54,34 +59,260 @@ impl ClientBuilder {
             .uri
             .unwrap_or_else(|| String::from("mongodb://127.0.0.1:27017"));
 
-        // Init the client
-        let mut credential = None;
-        if self.username.is_some() {
-            credential = Some(
-                Credential::builder()
-                    .username(self.username)
-                    .password(self.password)
-                    .build(),
-            );
-        }
-        let mut tls = None;
-        if self.ca.is_some() || self.cert_key.is_some() {
-            tls = Some(Tls::Enabled(
-                TlsOptions::builder()
-                    .ca_file_path(self.ca)
-                    .cert_key_file_path(self.cert_key)
-                    .build(),
-            ));
-        }
+        // NOTE: What we really want here is ClientOptionsParser, but its private... so lets try
+        // and work around that with minimal code duplication
         let url = Url::parse(&uri).map_err(crate::error::builder)?;
-        let options = mongodb::options::ClientOptions::builder()
+        let mut options = mongodb::options::ClientOptions::builder()
             .hosts(vec![mongodb::options::StreamAddress {
                 hostname: url.host_str().unwrap_or("127.0.0.1").to_owned(),
                 port: url.port(),
             }])
-            .credential(credential)
-            .tls(tls)
             .build();
+        let mut kv = url
+            .query_pairs()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect::<HashMap<String, String>>();
+        if let Some(app_name) = kv.remove("appName") {
+            options.app_name = Some(app_name);
+        }
+        if let Some(_compressors) = kv.remove("compressors") {
+            // FIXME: Field is private...
+            //options.compressors = Some(compressors.split(',').map(|v| v.to_string()).collect());
+        }
+        if let Some(connect_timeout) = kv.remove("connectTimeoutMS") {
+            options.connect_timeout = Some(Duration::from_millis(
+                str::parse(&connect_timeout).map_err(crate::error::builder)?,
+            ));
+        }
+        if let Some(direct) = kv.remove("directConnection") {
+            options.direct_connection = Some(str::parse(&direct).map_err(crate::error::builder)?);
+        }
+        if let Some(heartbeat_frequency) = kv.remove("heartbeatFrequencyMS") {
+            options.heartbeat_freq = Some(Duration::from_millis(
+                str::parse(&heartbeat_frequency).map_err(crate::error::builder)?,
+            ));
+        }
+        if let Some(local_threshold) = kv.remove("localThresholdMS") {
+            options.local_threshold = Some(Duration::from_millis(
+                str::parse(&local_threshold).map_err(crate::error::builder)?,
+            ));
+        }
+        if let Some(max_idle_time) = kv.remove("maxIdleTimeMS") {
+            options.max_idle_time = Some(Duration::from_millis(
+                str::parse(&max_idle_time).map_err(crate::error::builder)?,
+            ));
+        }
+        if let Some(max_pool_size) = kv.remove("maxPoolSize") {
+            options.max_pool_size =
+                Some(str::parse(&max_pool_size).map_err(crate::error::builder)?);
+        }
+        if let Some(min_pool_size) = kv.remove("minPoolSize") {
+            options.min_pool_size =
+                Some(str::parse(&min_pool_size).map_err(crate::error::builder)?);
+        }
+        if let Some(read_concern_level) = kv.remove("readConcernLevel") {
+            let level = match read_concern_level.as_str() {
+                "local" => ReadConcernLevel::Local,
+                "majority" => ReadConcernLevel::Majority,
+                "linearizable" => ReadConcernLevel::Linearizable,
+                "available" => ReadConcernLevel::Available,
+                _ => ReadConcernLevel::Custom(read_concern_level),
+            };
+            options.read_concern = Some(ReadConcern::from(level));
+        }
+        if let Some(replica_set) = kv.remove("replicaSet") {
+            options.repl_set_name = Some(replica_set);
+        }
+        if let Some(retry_reads) = kv.remove("retryReads") {
+            options.retry_reads = Some(str::parse(&retry_reads).map_err(crate::error::builder)?);
+        }
+        if let Some(retry_writes) = kv.remove("retryWrites") {
+            options.retry_writes = Some(str::parse(&retry_writes).map_err(crate::error::builder)?);
+        }
+        if let Some(server_selection_timeout) = kv.remove("serverSelectionTimeoutMS") {
+            options.server_selection_timeout = Some(Duration::from_millis(
+                str::parse(&server_selection_timeout).map_err(crate::error::builder)?,
+            ));
+        }
+        if let Some(_socket_timeout) = kv.remove("socketTimeoutMS") {
+            // FIXME: Field is private...
+            //options.socket_timeout = Some(Duration::from_millis(
+            //    str::parse(&socket_timeout).map_err(crate::error::builder)?,
+            //));
+        }
+        if let Some(_uuid_representation) = kv.remove("uuidRepresentation") {
+            // FIXME: Not supported by mongodb...
+            //options.uuid_representation = Some(uuid_representation);
+        }
+        if let Some(_wait_queue_multiple) = kv.remove("waitQueueMultiple") {
+            // FIXME: Not supported by mongodb...
+            //options.wait_queue_multiple = Some(str::parse(&wait_queue_multiple).map_err(crate::error::builder)?);
+        }
+        if let Some(wait_queue_timeout) = kv.remove("waitQueueTimeoutMS") {
+            options.wait_queue_timeout = Some(Duration::from_millis(
+                str::parse(&wait_queue_timeout).map_err(crate::error::builder)?,
+            ));
+        }
+        if let Some(_zlib_compression_level) = kv.remove("zlibCompressionLevel") {
+            // FIXME: Field is private...
+            //options.zlib_compression_level = Some(str::parse(&zlib_compression_level).map_err(crate::error::builder)?);
+        }
+
+        let journal = kv.remove("journal");
+        let w = kv.remove("w");
+        let w_timeout = kv.remove("wTimeoutMS");
+        if journal.is_some() || w.is_some() || w_timeout.is_some() {
+            let mut write_concern = WriteConcern::default();
+            if let Some(journal) = journal {
+                write_concern.journal = Some(str::parse(&journal).map_err(crate::error::builder)?);
+            }
+            if let Some(w) = w {
+                let w = match str::parse::<i32>(&w) {
+                    Ok(n) => Acknowledgment::Nodes(n),
+                    Err(_) => match w.as_str() {
+                        "majority" => Acknowledgment::Majority,
+                        _ => Acknowledgment::Custom(w),
+                    },
+                };
+                write_concern.w = Some(w);
+            }
+            if let Some(w_timeout) = w_timeout {
+                write_concern.w_timeout = Some(Duration::from_millis(
+                    str::parse(&w_timeout).map_err(crate::error::builder)?,
+                ));
+            }
+            options.write_concern = Some(write_concern);
+        }
+
+        let max_staleness = kv.remove("maxStalenessSeconds");
+        let read_preference = kv.remove("readPreference");
+        let read_preference_tags = kv.remove("readPreferenceTags");
+        if max_staleness.is_some() || read_preference.is_some() || read_preference_tags.is_some() {
+            let mut read_preference_options = ReadPreferenceOptions::default();
+            if let Some(max_staleness) = max_staleness {
+                read_preference_options.max_staleness = Some(Duration::from_secs(
+                    str::parse(&max_staleness).map_err(crate::error::builder)?,
+                ));
+            }
+            if let Some(read_preference_tags) = read_preference_tags {
+                let mut tags: HashMap<String, String> = HashMap::new();
+                for kv in read_preference_tags.split(',') {
+                    let pair: Vec<String> = kv.split(':').map(|v| v.to_string()).collect();
+                    if pair.len() != 2 {
+                        return Err(crate::error::builder("tags must be kv pairs"));
+                    }
+                    tags.insert(pair[0].to_string(), pair[1].to_string());
+                }
+                read_preference_options.tag_sets = Some(vec![tags]);
+            }
+            if let Some(read_preference) = read_preference {
+                let read = match read_preference.as_str() {
+                    "primary" => ReadPreference::Primary,
+                    "secondary" => ReadPreference::Secondary {
+                        options: read_preference_options,
+                    },
+                    "primary_preferred" => ReadPreference::PrimaryPreferred {
+                        options: read_preference_options,
+                    },
+                    "secondary_preferred" => ReadPreference::SecondaryPreferred {
+                        options: read_preference_options,
+                    },
+                    "nearest" => ReadPreference::Nearest {
+                        options: read_preference_options,
+                    },
+                    _ => {
+                        return Err(crate::error::builder(format!(
+                            "unknown read preference '{}'",
+                            read_preference
+                        )))
+                    }
+                };
+                options.selection_criteria = Some(SelectionCriteria::ReadPreference(read));
+            }
+        }
+
+        let auth_source = kv.remove("authSource");
+        let auth_mechanism = kv.remove("authMechanism");
+        let auth_mechanism_properties = kv.remove("authMechanismProperties");
+        if url.username() != ""
+            || self.username.is_some()
+            || auth_source.is_some()
+            || auth_mechanism.is_some()
+            || auth_mechanism_properties.is_some()
+        {
+            let mut credentials = Credential::default();
+            if self.username.is_some() || url.username() != "" {
+                credentials.username = self.username.or(Some(url.username().to_string()));
+                credentials.password = self.password.or(url.password().map(|p| p.to_string()));
+            }
+            if auth_source.is_some() {
+                credentials.source = auth_source;
+            }
+            if let Some(auth_mechanism) = auth_mechanism {
+                credentials.mechanism =
+                    Some(AuthMechanism::from_str(&auth_mechanism).map_err(crate::error::builder)?);
+            }
+            if let Some(auth_mechanism_properties) = auth_mechanism_properties {
+                let mut document = bson::Document::new();
+                for kv in auth_mechanism_properties.split(',') {
+                    let pair: Vec<String> = kv.split(':').map(|v| v.to_string()).collect();
+                    if pair.len() != 2 {
+                        return Err(crate::error::builder("properties must be kv pairs"));
+                    }
+                    document.insert(pair[0].to_string(), pair[1].to_string());
+                }
+                credentials.mechanism_properties = Some(document);
+            }
+            options.credential = Some(credentials);
+        }
+
+        let tls_enabled = kv.remove("tls");
+        let tls_insecure = kv.remove("tlsInsecure");
+        let tls_ca_file = kv.remove("tlsCAFile");
+        let tls_certificate_key_file = kv.remove("tlsCertificateKeyFile");
+        // FIXME: Not supported
+        //let tls_certificate_key_file_password = kv.remove("tlsCertificateKeyFilePassword");
+        let tls_allow_invalid_certificates = kv.remove("tlsAllowInvalidCertificates");
+        // FIXME: Not supported
+        //let tls_allow_invalid_hostnames = kv.remove("tlsAllowInvalidHostnames");
+        if self.ca.is_some()
+            || self.cert_key.is_some()
+            || tls_enabled.is_some()
+            || tls_insecure.is_some()
+            || tls_ca_file.is_some()
+            || tls_certificate_key_file.is_some()
+            || tls_allow_invalid_certificates.is_some()
+        {
+            let enabled = match tls_enabled {
+                Some(enabled) => enabled.parse::<bool>().map_err(crate::error::builder)?,
+                None => true,
+            };
+            let tls = match enabled {
+                true => {
+                    let mut options = TlsOptions::default();
+                    if let Some(tls_allow_invalid_certificates) = tls_allow_invalid_certificates {
+                        options.allow_invalid_certificates = Some(
+                            tls_allow_invalid_certificates
+                                .parse()
+                                .map_err(crate::error::builder)?,
+                        );
+                    } else if let Some(tls_insecure) = tls_insecure {
+                        options.allow_invalid_certificates =
+                            Some(tls_insecure.parse().map_err(crate::error::builder)?);
+                    }
+                    if let Some(ca_file_path) = self.ca.or(tls_ca_file) {
+                        options.ca_file_path = Some(ca_file_path);
+                    }
+                    if let Some(cert_key_file_path) = self.cert_key.or(tls_certificate_key_file) {
+                        options.cert_key_file_path = Some(cert_key_file_path);
+                    }
+                    Tls::Enabled(options)
+                }
+                false => Tls::Disabled,
+            };
+            options.tls = Some(tls);
+        }
+
         let client = mongodb::Client::with_options(options).map_err(crate::error::builder)?;
 
         Ok(Client {
