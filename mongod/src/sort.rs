@@ -45,8 +45,8 @@ where
 /// use mongod::{AsField, Field, Order, Query, Sort};
 ///
 /// # use mongod_derive::{Bson, Mongo};
-/// #[mongo(collection="users", filter, update)]
 /// #[derive(Bson, Mongo)]
+/// #[mongo(collection="users", filter, update)]
 /// pub struct User {
 ///     pub name: String,
 /// }
@@ -74,7 +74,7 @@ where
 ///
 /// let _cursor = Query::find::<User>()
 ///     .sort(sort)
-///     .query(&client)
+///     .query::<Document>(&client)
 ///     .await
 ///     .unwrap();
 /// # Ok(())

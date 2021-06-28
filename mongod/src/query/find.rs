@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::time::Duration;
 
-use bson::Document;
+use db::bson::Document;
 use mongodb::options::{Collation, CursorType, FindOptions, Hint, ReadConcern, SelectionCriteria};
 use mongodb::Cursor;
 
@@ -10,6 +10,8 @@ use crate::field::{AsField, Field};
 use crate::filter::{AsFilter, Filter};
 use crate::r#async::Client;
 use crate::sort::Sort;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 
 /// A querier to find documents in a MongoDB collection.
 ///
@@ -173,7 +175,7 @@ impl<C: Collection> Find<C> {
     ///
     /// This option is deprecated starting in MongoDB version 4.0 and removed in MongoDB 4.2. Use
     /// the max_time option instead.
-    pub fn max_scan(mut self, value: i64) -> Self {
+    pub fn max_scan(mut self, value: u64) -> Self {
         self.options.max_scan = Some(value);
         self
     }
@@ -234,7 +236,7 @@ impl<C: Collection> Find<C> {
     }
 
     /// The number of documents to skip before counting.
-    pub fn skip(mut self, value: i64) -> Self {
+    pub fn skip(mut self, value: u64) -> Self {
         self.options.skip = Some(value);
         self
     }
@@ -254,7 +256,10 @@ impl<C: Collection> Find<C> {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub async fn query(self, client: &Client) -> crate::Result<Cursor> {
+    pub async fn query<T>(self, client: &Client) -> crate::Result<Cursor<T>>
+    where
+        T: DeserializeOwned + Unpin + Serialize,
+    {
         client
             .database()
             .collection(C::COLLECTION)

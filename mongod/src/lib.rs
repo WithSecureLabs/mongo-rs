@@ -72,6 +72,7 @@
 //! ```no_run
 //! # use std::convert::TryFrom;
 //! # use mongod_derive::{Bson, Mongo};
+//! use bson::Document;
 //! # #[derive(Debug, Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
@@ -86,7 +87,7 @@
 //!
 //! let client = mongod::Client::new();
 //!
-//! let mut cursor = client.find::<User, _>(None).await.unwrap();
+//! let mut cursor = client.find::<User, _, Document>(None).await.unwrap();
 //! while let Some(res) = cursor.next().await {
 //!     if let Ok(doc) = res {
 //!         let user: User = User::from_document(doc).unwrap();
@@ -97,7 +98,7 @@
 //! # }
 //! ```
 //!
-//! ### Inserting
+//!T ### Inserting
 //!
 //! Inserting a user into the users collection.
 //!

@@ -5,6 +5,7 @@ use mongodb::options::{Collation, DeleteOptions, Hint, WriteConcern};
 use crate::collection::Collection;
 use crate::filter::{AsFilter, Filter};
 use crate::r#async::Client;
+use bson::Document;
 
 /// A querier to delete documents from a MongoDB collection.
 ///
@@ -107,7 +108,7 @@ impl<C: Collection> Delete<C> {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub async fn query(self, client: &Client) -> crate::Result<i64> {
+    pub async fn query(self, client: &Client) -> crate::Result<u64> {
         let filter = match self.filter {
             Some(f) => f,
             None => bson::Document::new(),
@@ -115,13 +116,13 @@ impl<C: Collection> Delete<C> {
         let result = if self.many {
             client
                 .database()
-                .collection(C::COLLECTION)
+                .collection::<Document>(C::COLLECTION)
                 .delete_many(filter, Some(self.options))
                 .await
         } else {
             client
                 .database()
-                .collection(C::COLLECTION)
+                .collection::<Document>(C::COLLECTION)
                 .delete_one(filter, Some(self.options))
                 .await
         }
@@ -139,7 +140,7 @@ impl<C: Collection> Delete<C> {
     ///
     /// This method fails if the mongodb encountered an error.
     #[cfg(feature = "blocking")]
-    pub fn blocking(self, client: &crate::blocking::Client) -> crate::Result<i64> {
+    pub fn blocking(self, client: &crate::blocking::Client) -> crate::Result<u64> {
         let filter = match self.filter {
             Some(f) => f,
             None => bson::Document::new(),
