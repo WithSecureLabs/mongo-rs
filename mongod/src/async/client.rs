@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::Display;
+use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -306,10 +307,10 @@ impl ClientBuilder {
                             Some(tls_insecure.parse().map_err(crate::error::builder)?);
                     }
                     if let Some(ca_file_path) = self.ca.or(tls_ca_file) {
-                        options.ca_file_path = Some(ca_file_path.parse().unwrap());
+                        options.ca_file_path = Some(PathBuf::from(ca_file_path));
                     }
                     if let Some(cert_key_file_path) = self.cert_key.or(tls_certificate_key_file) {
-                        options.cert_key_file_path = Some(cert_key_file_path.parse().unwrap());
+                        options.cert_key_file_path = Some(PathBuf::from(cert_key_file_path));
                     }
                     Tls::Enabled(options)
                 }
