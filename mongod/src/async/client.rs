@@ -1,16 +1,21 @@
 use std::collections::HashMap;
 use std::fmt::Display;
+use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 
 use bson::oid::ObjectId;
+use bson::Document;
 use futures::StreamExt;
 use mongodb::options::{
     Acknowledgment, AuthMechanism, Credential, ReadConcern, ReadConcernLevel, ReadPreference,
     ReadPreferenceOptions, SelectionCriteria, Tls, TlsOptions, WriteConcern,
 };
 use url::Url;
+
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 
 use crate::collection::Collection;
 use crate::filter::{AsFilter, Filter};
@@ -63,8 +68,8 @@ impl ClientBuilder {
         // and work around that with minimal code duplication
         let url = Url::parse(&uri).map_err(crate::error::builder)?;
         let mut options = mongodb::options::ClientOptions::builder()
-            .hosts(vec![mongodb::options::StreamAddress {
-                hostname: url.host_str().unwrap_or("127.0.0.1").to_owned(),
+            .hosts(vec![mongodb::options::ServerAddress::Tcp {
+                host: url.host_str().unwrap_or("127.0.0.1").to_owned(),
                 port: url.port(),
             }])
             .build();
@@ -148,10 +153,11 @@ impl ClientBuilder {
             // FIXME: Not supported by mongodb...
             //options.wait_queue_multiple = Some(str::parse(&wait_queue_multiple).map_err(crate::error::builder)?);
         }
-        if let Some(wait_queue_timeout) = kv.remove("waitQueueTimeoutMS") {
-            options.wait_queue_timeout = Some(Duration::from_millis(
-                str::parse(&wait_queue_timeout).map_err(crate::error::builder)?,
-            ));
+        if let Some(_wait_queue_timeout) = kv.remove("waitQueueTimeoutMS") {
+            // FIXME: Not supported by mongodb...
+            // options.wait_queue_timeout = Some(Duration::from_millis(
+            //     str::parse(&wait_queue_timeout).map_err(crate::error::builder)?,
+            // ));
         }
         if let Some(_zlib_compression_level) = kv.remove("zlibCompressionLevel") {
             // FIXME: Field is private...
@@ -167,7 +173,7 @@ impl ClientBuilder {
                 write_concern.journal = Some(str::parse(&journal).map_err(crate::error::builder)?);
             }
             if let Some(w) = w {
-                let w = match str::parse::<i32>(&w) {
+                let w = match str::parse::<u32>(&w) {
                     Ok(n) => Acknowledgment::Nodes(n),
                     Err(_) => match w.as_str() {
                         "majority" => Acknowledgment::Majority,
@@ -301,10 +307,10 @@ impl ClientBuilder {
                             Some(tls_insecure.parse().map_err(crate::error::builder)?);
                     }
                     if let Some(ca_file_path) = self.ca.or(tls_ca_file) {
-                        options.ca_file_path = Some(ca_file_path);
+                        options.ca_file_path = Some(PathBuf::from(ca_file_path));
                     }
                     if let Some(cert_key_file_path) = self.cert_key.or(tls_certificate_key_file) {
-                        options.cert_key_file_path = Some(cert_key_file_path);
+                        options.cert_key_file_path = Some(PathBuf::from(cert_key_file_path));
                     }
                     Tls::Enabled(options)
                 }
@@ -472,7 +478,7 @@ impl Client {
     }
 
     /// Returns the `mongodb::Document` from the mongodb.
-    pub fn collection<C>(&self) -> mongodb::Collection
+    pub fn collection<C>(&self) -> mongodb::Collection<Document>
     where
         C: Collection,
     {
@@ -492,7 +498,7 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub async fn delete<C, F>(&self, filter: Option<F>) -> crate::Result<i64>
+    pub async fn delete<C, F>(&self, filter: Option<F>) -> crate::Result<u64>
     where
         C: AsFilter<F> + Collection,
         F: Filter,
@@ -530,10 +536,11 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub async fn find<C, F>(&self, filter: Option<F>) -> crate::Result<mongodb::Cursor>
+    pub async fn find<C, F, T>(&self, filter: Option<F>) -> crate::Result<mongodb::Cursor<T>>
     where
         C: AsFilter<F> + Collection,
         F: Filter,
+        T: DeserializeOwned + Unpin + Serialize,
     {
         let mut find: query::Find<C> = query::Find::new();
         if let Some(filter) = filter {

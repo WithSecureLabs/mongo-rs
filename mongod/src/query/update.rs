@@ -158,18 +158,18 @@ impl<C: Collection> Update<C> {
         let result = if self.many {
             client
                 .database()
-                .collection(C::COLLECTION)
+                .collection::<Document>(C::COLLECTION)
                 .update_many(filter, updates.into_document()?, self.options)
                 .await
         } else {
             client
                 .database()
-                .collection(C::COLLECTION)
+                .collection::<Document>(C::COLLECTION)
                 .update_one(filter, updates.into_document()?, self.options)
                 .await
         }
         .map_err(crate::error::mongodb)?;
-        Ok(result.matched_count)
+        Ok(result.matched_count as i64)
     }
 
     /// Query the database with this querier in a blocking context.

@@ -30,6 +30,7 @@ pub fn expand_derive_bson(input: &syn::DeriveInput) -> Result<TokenStream, Vec<s
             extern crate mongod as _mongo;
 
             use std::convert::{TryFrom, TryInto};
+            use _mongo::ext::bson::de::ErrorExt;
 
             #body
         };
@@ -122,9 +123,9 @@ fn impl_enum_struct(
             let msg = format!("'{}' is missing", id);
             quote! {
                 if #member.is_none() {
-                    return Err(_mongo::bson::de::Error::DeserializationError {
-                        message: #msg.to_owned(),
-                    }.into());
+                    return Err(_mongo::bson::de::Error::custom(
+                        #msg.to_owned(),
+                    ).into());
                 }
             }
         });
@@ -202,21 +203,21 @@ fn impl_enum_struct(
                 fn try_from(bson: _mongo::bson::Bson) -> Result<Self, Self::Error> {
                     let mut doc = match bson {
                         _mongo::bson::Bson::Document(doc) => doc,
-                        _ => return Err(_mongo::bson::de::Error::DeserializationError {
-                            message: "not a BSON Document".to_owned()
-                        }.into()),
+                        _ => return Err(_mongo::bson::de::Error::custom(
+                            "not a BSON Document".to_owned()
+                        ).into()),
                     };
                     let value = match doc.remove("_type") {
                         Some(v) => v,
-                        None => return Err(_mongo::bson::de::Error::DeserializationError {
-                            message: "enum type not found".to_owned()
-                        }.into()),
+                        None => return Err(_mongo::bson::de::Error::custom(
+                            "enum type not found".to_owned()
+                        ).into()),
                     };
                     match value.as_str() {
                         #(#try_from_bson_fields)*
-                        _ => return Err(_mongo::bson::de::Error::DeserializationError {
-                            message: "invalid variant".to_owned()
-                        }.into()),
+                        _ => return Err(_mongo::bson::de::Error::custom(
+                            "invalid variant".to_owned()
+                        ).into()),
                     }
                 }
             }
@@ -281,15 +282,15 @@ fn impl_enum_unit(
                 fn try_from(bson: _mongo::bson::Bson) -> Result<Self, Self::Error> {
                     let value = match bson {
                         _mongo::bson::Bson::String(s) => s,
-                        _ => return Err(_mongo::bson::de::Error::DeserializationError {
-                            message: "not a BSON String".to_owned()
-                        }.into()),
+                        _ => return Err(_mongo::bson::de::Error::custom(
+                            "not a BSON String".to_owned()
+                        ).into()),
                     };
                     match value.as_str() {
                         #(#try_from_bson_fields)*
-                        _ => return Err(_mongo::bson::de::Error::DeserializationError {
-                            message: "invalid variant".to_owned()
-                        }.into()),
+                        _ => return Err(_mongo::bson::de::Error::custom(
+                            "invalid variant".to_owned()
+                        ).into()),
                     }
                 }
             }
@@ -359,9 +360,9 @@ fn impl_struct(
         let msg = format!("'{}' is missing", id);
         quote! {
             if #member.is_none() {
-                return Err(_mongo::bson::de::Error::DeserializationError {
-                    message: #msg.to_owned(),
-                }.into());
+                return Err(_mongo::bson::de::Error::custom(
+                    #msg.to_owned(),
+                ).into());
             }
         }
     });
@@ -383,9 +384,9 @@ fn impl_struct(
                 fn try_from(bson: _mongo::bson::Bson) -> Result<Self, Self::Error> {
                     let mut doc = match bson {
                         _mongo::bson::Bson::Document(doc) => doc,
-                        _ => return Err(_mongo::bson::de::Error::DeserializationError {
-                            message: "not a BSON Document".to_owned()
-                        }.into()),
+                        _ => return Err(_mongo::bson::de::Error::custom(
+                            "not a BSON Document".to_owned()
+                        ).into()),
                     };
                     #(#options)*
                     #(#values)*
