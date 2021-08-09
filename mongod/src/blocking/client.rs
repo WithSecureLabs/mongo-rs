@@ -218,7 +218,7 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub fn delete<C, F>(&self, filter: Option<F>) -> crate::Result<i64>
+    pub fn delete<C, F>(&self, filter: Option<F>) -> crate::Result<u64>
     where
         C: AsFilter<F> + Collection,
         F: Filter,
@@ -351,7 +351,7 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub fn update<C, F, U>(&self, filter: F, updates: Updates<U>) -> crate::Result<i64>
+    pub fn update<C, F, U>(&self, filter: F, updates: Updates<U>) -> crate::Result<u64>
     where
         C: AsFilter<F> + AsUpdate<U> + Collection,
         F: Filter,
@@ -389,7 +389,7 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub fn upsert<C, F, U>(&self, filter: F, updates: Updates<U>) -> crate::Result<i64>
+    pub fn upsert<C, F, U>(&self, filter: F, updates: Updates<U>) -> crate::Result<u64>
     where
         C: AsFilter<F> + AsUpdate<U> + Collection,
         F: Filter,
@@ -476,12 +476,12 @@ impl ClientInner {
                         let resp = match req {
                             Request::Delete(many, collection, filter, options) => if many {
                                 database
-                                    .collection(collection)
+                                    .collection::<Document>(collection)
                                     .delete_many(filter, options)
                                     .await
                             } else {
                                 database
-                                    .collection(collection)
+                                    .collection::<Document>(collection)
                                     .delete_one(filter, options)
                                     .await
                             }
@@ -508,12 +508,12 @@ impl ClientInner {
                             Request::Update(many, collection, filter, updates, options) => {
                                 if many {
                                     database
-                                        .collection(collection)
+                                        .collection::<Document>(collection)
                                         .update_many(filter, updates, options)
                                         .await
                                 } else {
                                     database
-                                        .collection(collection)
+                                        .collection::<Document>(collection)
                                         .update_one(filter, updates, options)
                                         .await
                                 }

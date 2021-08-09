@@ -19,7 +19,7 @@ pub struct Cursor {
 
 impl Cursor {
     /// Constructs a synchronous `Cursor` from an asynchronous one.
-    pub fn new(cursor: mongodb::Cursor) -> Self {
+    pub fn new(cursor: mongodb::Cursor<Document>) -> Self {
         let (tx, mut rx) =
             tokio::sync::mpsc::unbounded_channel::<(Request, std::sync::mpsc::Sender<Response>)>();
         let f = async move {

@@ -188,7 +188,7 @@ impl<C: Collection> Update<C> {
         self,
         client: &crate::blocking::Client,
         updates: Updates<U>,
-    ) -> crate::Result<i64>
+    ) -> crate::Result<u64>
     where
         C: AsUpdate<U>,
         U: crate::update::Update,

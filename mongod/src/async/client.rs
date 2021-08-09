@@ -14,9 +14,6 @@ use mongodb::options::{
 };
 use url::Url;
 
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-
 use crate::collection::Collection;
 use crate::filter::{AsFilter, Filter};
 use crate::query;
@@ -536,11 +533,10 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub async fn find<C, F, T>(&self, filter: Option<F>) -> crate::Result<mongodb::Cursor<T>>
+    pub async fn find<C, F, T>(&self, filter: Option<F>) -> crate::Result<mongodb::Cursor<Document>>
     where
         C: AsFilter<F> + Collection,
         F: Filter,
-        T: DeserializeOwned + Unpin + Serialize + Send + Sync,
     {
         let mut find: query::Find<C> = query::Find::new();
         if let Some(filter) = filter {
