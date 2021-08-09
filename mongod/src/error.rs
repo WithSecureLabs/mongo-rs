@@ -119,14 +119,17 @@ pub enum Kind {
 }
 
 // Helpers
+#[allow(dead_code)]
 pub(crate) fn bson<E: Into<Source>>(e: E) -> Error {
     Error::new(Kind::Bson).with(e)
 }
 
+#[allow(dead_code)]
 pub(crate) fn builder<E: Into<Source>>(e: E) -> Error {
     Error::new(Kind::Builder).with(e)
 }
 
+#[allow(dead_code)]
 pub(crate) fn mongodb<E: Into<Source>>(e: E) -> Error {
     Error::new(Kind::Mongodb).with(e)
 }
