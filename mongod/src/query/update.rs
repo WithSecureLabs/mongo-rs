@@ -16,7 +16,9 @@ use crate::update::{AsUpdate, Updates};
 ///
 /// ```no_run
 /// # use mongod_derive::{Bson, Mongo};
-/// #[derive(Bson, Mongo)]
+/// use serde::{Deserialize, Serialize};
+///
+/// #[derive(Bson, Mongo, Deserialize, Serialize)]
 /// #[mongo(collection="users", field, filter, update)]
 /// pub struct User {
 ///     name: String,

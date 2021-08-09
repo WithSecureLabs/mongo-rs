@@ -692,6 +692,9 @@ impl TryFrom<Bson> for chrono::DateTime<chrono::Utc> {
 mod test {
     use super::*;
 
+    #[cfg(feature = "chrono")]
+    use chrono::Timelike;
+
     #[test]
     fn bool_to_bson() {
         let v: bool = true;
@@ -830,7 +833,7 @@ mod test {
     fn chrono_to_bson() {
         let v: chrono::DateTime<chrono::Utc> = chrono::Utc::now();
         let b = Bson::try_from(v).unwrap().0;
-        assert_eq!(b, bson::Bson::DateTime(v));
+        assert_eq!(b, bson::Bson::DateTime(bson::DateTime::from_chrono(v)));
     }
 
     #[test]
@@ -954,8 +957,10 @@ mod test {
     #[cfg(feature = "chrono")]
     #[test]
     fn bson_to_chrono() {
-        let v: chrono::DateTime<chrono::Utc> = chrono::Utc::now();
-        let b = Bson(bson::Bson::DateTime(v));
+        let mut v: chrono::DateTime<chrono::Utc> = chrono::Utc::now();
+        // NOTE: Bson truncates nanoseconds...
+        v = v.with_nanosecond(0).unwrap();
+        let b = Bson(bson::Bson::DateTime(bson::DateTime::from_chrono(v)));
         let dt = chrono::DateTime::try_from(b).unwrap();
         assert_eq!(dt, v);
     }

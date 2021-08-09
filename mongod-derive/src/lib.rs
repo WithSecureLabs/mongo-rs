@@ -20,8 +20,8 @@
 //! ```
 //! # mod wrap {
 //! # use mongod_derive::Mongo;
-//! # #[derive(mongod_derive::Bson)]
-//! #[derive(Mongo)]
+//! use serde::{Deserialize, Serialize};
+//! #[derive(Mongo, Deserialize, Serialize)]
 //! #[mongo(collection = "users", field, filter, update)]
 //! pub struct User {
 //!     name: String,
@@ -143,8 +143,9 @@ pub fn derive_bson(input: TokenStream) -> TokenStream {
 /// ```
 /// # mod wrap {
 /// # use mongod_derive::Mongo;
-/// # #[derive(mongod_derive::Bson)]
-/// #[derive(Mongo)]
+/// use serde::{Deserialize, Serialize};
+///
+/// #[derive(Mongo, Deserialize, Serialize)]
 /// #[mongo(collection = "users")]
 /// pub struct User {
 ///     name: String,
@@ -228,8 +229,9 @@ pub fn derive_bson(input: TokenStream) -> TokenStream {
 /// ```
 /// # mod wrap {
 /// # use mongod_derive::Mongo;
-/// # #[derive(mongod_derive::Bson)]
-/// #[derive(Mongo)]
+/// use serde::{Deserialize, Serialize};
+///
+/// #[derive(Mongo, Deserialize, Serialize)]
 /// #[mongo(collection = "users")]
 /// pub struct User {
 ///     name: String,
@@ -246,8 +248,9 @@ pub fn derive_bson(input: TokenStream) -> TokenStream {
 /// ```
 /// # mod wrap {
 /// # use mongod_derive::Mongo;
-/// # #[derive(mongod_derive::Bson)]
-/// #[derive(Mongo)]
+/// use serde::{Deserialize, Serialize};
+///
+/// #[derive(Mongo, Deserialize, Serialize)]
 /// #[mongo(collection = "users")]
 /// pub struct User {
 ///     name: String,

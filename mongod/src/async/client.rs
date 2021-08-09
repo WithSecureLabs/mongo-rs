@@ -533,7 +533,7 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub async fn find<C, F, T>(&self, filter: Option<F>) -> crate::Result<mongodb::Cursor<Document>>
+    pub async fn find<C, F>(&self, filter: Option<F>) -> crate::Result<mongodb::Cursor<C>>
     where
         C: AsFilter<F> + Collection,
         F: Filter,
@@ -563,8 +563,7 @@ impl Client {
         let mut cursor = find.filter(filter)?.query(&self).await?;
         if let Some(res) = cursor.next().await {
             let doc = res.map_err(crate::error::mongodb)?;
-            let document: C = C::from_document(doc).map_err(crate::error::bson)?;
-            return Ok(Some(document));
+            return Ok(Some(doc));
         }
         Ok(None)
     }

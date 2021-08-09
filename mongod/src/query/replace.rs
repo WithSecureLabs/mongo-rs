@@ -18,7 +18,9 @@ use crate::r#async::Client;
 /// # use mongod_derive::{Bson, Mongo};
 ///
 /// use mongod::{AsFilter, Comparator};
-/// #[derive(Bson, Mongo)]
+/// use serde::{Deserialize, Serialize};
+///
+/// #[derive(Bson, Mongo, Deserialize, Serialize)]
 /// #[mongo(collection="users", field, filter, update)]
 /// pub struct User {
 ///     name: String,
@@ -130,7 +132,7 @@ impl<C: Collection> Replace<C> {
         let result = client
             .database()
             .collection(C::COLLECTION)
-            .replace_one(filter, document.into_document()?, self.options)
+            .replace_one(filter, document, self.options)
             .await
             .map_err(crate::error::mongodb)?;
         if result.modified_count > 0 {
@@ -159,7 +161,7 @@ impl<C: Collection> Replace<C> {
         let resp = client.execute(crate::blocking::Request::Replace(
             C::COLLECTION,
             filter,
-            document.into_document()?,
+            bson::to_document(&document).map_err(crate::error::bson)?,
             self.options,
         ))?;
         if let crate::blocking::Response::Replace(r) = resp {

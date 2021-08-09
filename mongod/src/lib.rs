@@ -17,8 +17,10 @@
 //! Defining an example collection using derive.
 //!
 //! ```
-//! # use mongod_derive::{Bson, Mongo};
-//! #[derive(Bson, Mongo)]
+//! use serde::{Deserialize, Serialize};
+//!
+//! # use mongod_derive::Mongo;
+//! #[derive(Mongo, Deserialize, Serialize)]
 //! #[mongo(collection="users", field, filter, update)]
 //! pub struct User {
 //!     name: String,
@@ -43,8 +45,9 @@
 //! Deleting a user from the users collection.
 //!
 //! ```no_run
-//! # use mongod_derive::{Bson, Mongo};
-//! # #[derive(Bson, Mongo)]
+//! # use mongod_derive::Mongo;
+//! # use serde::{Deserialize, Serialize};
+//! # #[derive(Mongo, Deserialize, Serialize)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
@@ -72,8 +75,9 @@
 //! ```no_run
 //! # use std::convert::TryFrom;
 //! # use mongod_derive::{Bson, Mongo};
+//! # use serde::{Deserialize, Serialize};
 //! use bson::Document;
-//! # #[derive(Debug, Bson, Mongo)]
+//! # #[derive(Debug, Mongo, Deserialize, Serialize)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
@@ -87,10 +91,9 @@
 //!
 //! let client = mongod::Client::new();
 //!
-//! let mut cursor = client.find::<User, _, Document>(None).await.unwrap();
+//! let mut cursor = client.find::<User, _>(None).await.unwrap();
 //! while let Some(res) = cursor.next().await {
-//!     if let Ok(doc) = res {
-//!         let user: User = User::from_document(doc).unwrap();
+//!     if let Ok(user) = res {
 //!         println!("{:?}", user);
 //!     }
 //! }
@@ -103,8 +106,9 @@
 //! Inserting a user into the users collection.
 //!
 //! ```no_run
-//! # use mongod_derive::{Bson, Mongo};
-//! # #[derive(Debug, Bson, Mongo)]
+//! # use mongod_derive::Mongo;
+//! # use serde::{Deserialize, Serialize};
+//! # #[derive(Debug, Mongo, Deserialize, Serialize)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
@@ -132,7 +136,8 @@
 //!
 //! ```no_run
 //! # use mongod_derive::{Bson, Mongo};
-//! # #[derive(Debug, Bson, Mongo)]
+//! # use serde::{Deserialize, Serialize};
+//! # #[derive(Debug, Mongo, Deserialize, Serialize)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
@@ -165,7 +170,8 @@
 //!
 //! ```no_run
 //! # use mongod_derive::{Bson, Mongo};
-//! # #[derive(Debug, Bson, Mongo)]
+//! # use serde::{Deserialize, Serialize};
+//! # #[derive(Debug, Mongo, Deserialize, Serialize)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,

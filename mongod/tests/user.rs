@@ -1,9 +1,12 @@
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 
-use mongod::bson::{Bson, Document};
+use serde::{Deserialize, Serialize};
+
+use mongod::bson::Document;
 use mongod::ext;
 use mongod::{AsField, AsFilter, AsUpdate, Collection, Comparator, Error, Field, Filter, Update};
 
+#[derive(Deserialize, Serialize)]
 pub struct User {
     pub name: String,
     pub age: Option<u32>,
@@ -11,44 +14,6 @@ pub struct User {
 
 impl Collection for User {
     const COLLECTION: &'static str = "users";
-
-    fn from_document(document: Document) -> Result<Self, Error> {
-        let mut document = document;
-        let mut name: Option<String> = None;
-        let mut age: Option<Option<u32>> = None;
-        if let Some(value) = document.remove("name") {
-            name = Some(String::try_from(ext::bson::Bson(value))?);
-        }
-        if let Some(value) = document.remove("age") {
-            let wrap = ext::bson::Bson(value);
-            let opt = match Option::<Bson>::from(wrap) {
-                Some(v) => Some(
-                    ext::bson::Bson(v)
-                        .try_into()
-                        .map_err(Error::invalid_document)?,
-                ),
-                None => None,
-            };
-            age = Some(opt)
-        }
-        if name.is_none() {
-            return Err(Error::invalid_document("missing required field `name`"));
-        }
-        if age.is_none() {
-            return Err(Error::invalid_document("missing required field `age`"));
-        }
-        Ok(Self {
-            name: name.expect("could not get name"),
-            age: age.expect("could not get name"),
-        })
-    }
-
-    fn into_document(self) -> Result<Document, Error> {
-        let mut doc = Document::new();
-        doc.insert("name", self.name);
-        doc.insert("age", ext::bson::Bson::try_from(self.age)?.0);
-        Ok(doc)
-    }
 }
 
 impl AsField<UserField> for User {}

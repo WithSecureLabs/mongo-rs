@@ -16,7 +16,9 @@ use bson::Document;
 /// ```no_run
 /// # async fn doc() -> Result<(), mongod::Error> {
 /// # use mongod_derive::{Bson, Mongo};
-/// #[derive(Bson, Mongo)]
+/// use serde::{Deserialize, Serialize};
+///
+/// #[derive(Mongo, Deserialize, Serialize)]
 /// #[mongo(collection="users", field, filter, update)]
 /// pub struct User {
 ///     name: String,

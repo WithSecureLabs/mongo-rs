@@ -13,8 +13,9 @@
 //! example to fetch users from a collection.
 //!
 //! ```no_run
-//! # use mongod_derive::{Bson, Mongo};
-//! # #[derive(Debug, Bson, Mongo)]
+//! # use mongod_derive::Mongo;
+//! # use serde::{Deserialize, Serialize};
+//! # #[derive(Debug, Mongo, Deserialize, Serialize)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
@@ -27,8 +28,7 @@
 //!
 //! let mut cursor = client.find::<User, _>(None).unwrap();
 //! while let Some(res) = cursor.next() {
-//!     if let Ok(doc) = res {
-//!         let user: User = User::from_document(doc).unwrap();
+//!     if let Ok(user) = res {
 //!         println!("{:?}", user);
 //!     }
 //! }

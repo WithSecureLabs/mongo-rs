@@ -5,7 +5,7 @@ mod user;
 mod wrapper {
     use super::*;
 
-    use mongod::{AsFilter, AsUpdate, Collection, Comparator, Updates};
+    use mongod::{AsFilter, AsUpdate, Comparator, Updates};
 
     use user::User;
 
@@ -29,8 +29,8 @@ mod wrapper {
         // Fetch
         let mut count: u32 = 0;
         let mut cursor = client.find::<User, _>(None).unwrap();
-        while let Some(doc) = cursor.next() {
-            User::from_document(doc.unwrap()).unwrap();
+        while let Some(res) = cursor.next() {
+            let _user = res.unwrap();
             count += 1;
         }
         assert_eq!(count, 2);

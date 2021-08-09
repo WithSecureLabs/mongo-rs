@@ -16,7 +16,9 @@ use crate::r#async::Client;
 /// ```no_run
 /// # async fn doc() -> Result<(), mongod::Error> {
 /// # use mongod_derive::{Bson, Mongo};
-/// #[derive(Bson, Mongo)]
+/// use serde::{Deserialize, Serialize};
+///
+/// #[derive(Bson, Mongo, Deserialize, Serialize)]
 /// #[mongo(collection="users", field, filter, update)]
 /// pub struct User {
 ///     name: String,
@@ -94,10 +96,6 @@ impl<C: Collection> Insert<C> {
     where
         C: Collection,
     {
-        let documents = documents
-            .into_iter()
-            .map(|s| s.into_document())
-            .collect::<Result<Vec<Document>, _>>()?;
         client
             .database()
             .collection(C::COLLECTION)
@@ -129,8 +127,9 @@ impl<C: Collection> Insert<C> {
     {
         let documents = documents
             .into_iter()
-            .map(|s| s.into_document())
-            .collect::<Result<Vec<Document>, _>>()?;
+            .map(|s| bson::to_document(&s))
+            .collect::<Result<Vec<Document>, _>>()
+            .map_err(crate::error::bson)?;
         let resp = client.execute(crate::blocking::Request::Insert(
             C::COLLECTION,
             documents,

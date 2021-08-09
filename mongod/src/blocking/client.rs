@@ -10,7 +10,7 @@ use mongodb::options::{
 };
 use mongodb::results::{DeleteResult, InsertManyResult, UpdateResult};
 
-use super::cursor::Cursor;
+use super::cursor::{Cursor, CursorInt};
 use crate::collection::Collection;
 use crate::filter::{AsFilter, Filter};
 use crate::query;
@@ -167,7 +167,7 @@ pub(crate) enum Request {
 }
 pub(crate) enum Response {
     Delete(DeleteResult),
-    Find(Cursor),
+    Find(CursorInt),
     Insert(InsertManyResult),
     Replace(UpdateResult),
     Update(UpdateResult),
@@ -255,7 +255,7 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub fn find<C, F>(&self, filter: Option<F>) -> crate::Result<Cursor>
+    pub fn find<C, F>(&self, filter: Option<F>) -> crate::Result<Cursor<C>>
     where
         C: AsFilter<F> + Collection,
         F: Filter,
@@ -284,8 +284,7 @@ impl Client {
         let find: query::Find<C> = query::Find::new();
         let mut cursor = find.filter(filter)?.blocking(&self)?;
         if let Some(res) = cursor.next() {
-            let doc = res.map_err(crate::error::mongodb)?;
-            let document: C = C::from_document(doc).map_err(crate::error::bson)?;
+            let document = res.map_err(crate::error::mongodb)?;
             return Ok(Some(document));
         }
         Ok(None)
@@ -489,7 +488,7 @@ impl ClientInner {
                             .map_err(crate::error::mongodb),
                             Request::Find(collection, filter, options) => {
                                 match database.collection(collection).find(filter, options).await {
-                                    Ok(c) => Ok(Response::Find(Cursor::new(c))),
+                                    Ok(c) => Ok(Response::Find(CursorInt::new(c))),
                                     Err(e) => Err(crate::error::mongodb(e)),
                                 }
                             }

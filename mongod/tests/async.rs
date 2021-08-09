@@ -1,8 +1,7 @@
 use futures::stream::StreamExt;
-use mongod::{AsFilter, AsUpdate, Collection, Comparator, Updates};
+use mongod::{AsFilter, AsUpdate, Comparator, Updates};
 
 use user::User;
-use bson::Document;
 
 mod common;
 mod user;
@@ -26,9 +25,9 @@ async fn async_client() {
 
     // Fetch
     let mut count: u32 = 0;
-    let mut cursor = client.find::<User, _, Document>(None).await.unwrap();
-    while let Some(doc) = cursor.next().await {
-        User::from_document(doc.unwrap()).unwrap();
+    let mut cursor = client.find::<User, _>(None).await.unwrap();
+    while let Some(res) = cursor.next().await {
+        let _user = res.unwrap();
         count += 1;
     }
     assert_eq!(count, 2);

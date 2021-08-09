@@ -12,8 +12,9 @@ use crate::error::Error;
 /// # use mongod_derive::{Bson, Mongo};
 /// use mongod::bson::Document;
 /// use mongod::{AsUpdate, Error, Update};
+/// use serde::{Deserialize, Serialize};
 ///
-/// #[derive(Bson, Mongo)]
+/// #[derive(Bson, Mongo, Deserialize, Serialize)]
 /// #[mongo(collection="users")]
 /// pub struct User {
 ///     pub name: String,
@@ -104,8 +105,9 @@ pub trait Update {
 /// # use mongod_derive::{Bson, Mongo};
 /// use mongod::bson::Document;
 /// use mongod::{AsFilter, AsUpdate, Comparator, Error, Update, Updates};
+/// use serde::{Deserialize, Serialize};
 ///
-/// #[derive(Bson, Mongo)]
+/// #[derive(Bson, Mongo, Deserialize, Serialize)]
 /// #[mongo(collection="users", field, filter)]
 /// pub struct User {
 ///     pub name: String,

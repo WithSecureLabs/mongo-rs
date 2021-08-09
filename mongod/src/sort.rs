@@ -43,9 +43,10 @@ where
 /// # async fn doc() -> Result<(), mongod::Error> {
 /// use mongod::bson::Document;
 /// use mongod::{AsField, Field, Order, Query, Sort};
+/// use serde::{Deserialize, Serialize};
 ///
 /// # use mongod_derive::{Bson, Mongo};
-/// #[derive(Bson, Mongo)]
+/// #[derive(Bson, Mongo, Deserialize, Serialize)]
 /// #[mongo(collection="users", filter, update)]
 /// pub struct User {
 ///     pub name: String,
@@ -74,7 +75,7 @@ where
 ///
 /// let _cursor = Query::find::<User>()
 ///     .sort(sort)
-///     .query::<Document>(&client)
+///     .query(&client)
 ///     .await
 ///     .unwrap();
 /// # Ok(())
