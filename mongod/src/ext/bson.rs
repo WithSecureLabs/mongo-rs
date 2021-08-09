@@ -678,7 +678,7 @@ impl TryFrom<Bson> for chrono::DateTime<chrono::Utc> {
     fn try_from(bson: Bson) -> Result<Self, Self::Error> {
         let inner = bson.0;
         match inner {
-            bson::Bson::DateTime(dt) => Ok(dt),
+            bson::Bson::DateTime(dt) => Ok(dt.into()),
             _ => Err(bson::de::Error::custom(format!(
                 "invalid variant, expected `Bson::DateTime(...)` but found `{}`",
                 inner
