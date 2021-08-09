@@ -1,11 +1,11 @@
 //! Extensions for the `bson` crate so that `mongo-derive` can be implemented efficiently.
 
+use serde::de::Error;
+use serde::ser::Error as SerError;
 use std::collections::{HashMap, HashSet};
 use std::convert::{TryFrom, TryInto};
 use std::hash::Hash;
 use std::iter::FromIterator;
-use serde::de::Error;
-use serde::ser::Error as SerError;
 
 // The BSON crate implments zero methods to go from BSON to another type without using serde, lets
 // rectify that here...
@@ -16,10 +16,10 @@ use serde::ser::Error as SerError;
 pub mod de {
     //! Extends `bson`'s deserialisation error with `Infallible` so that is can be used in rust
     //! conversions.
+    pub use serde::de::Error as ErrorExt;
     use std::convert::Infallible;
     use std::error::Error as StdError;
     use std::fmt;
-    pub use serde::de::Error as ErrorExt;
 
     /// An error that extends `bson`'s deserialisation error.
     pub struct Error(pub bson::de::Error);
@@ -132,8 +132,6 @@ wrap_bson_from!(f32);
 wrap_bson_from!(f64);
 wrap_bson_from!(i32);
 wrap_bson_from!(i64);
-wrap_bson_from!(u32);
-wrap_bson_from!(u64);
 wrap_bson_from!(String);
 wrap_bson_from!([u8; 12]);
 #[cfg(feature = "chrono")]
@@ -169,15 +167,27 @@ impl From<u16> for Bson {
     }
 }
 
+impl From<u32> for Bson {
+    fn from(value: u32) -> Self {
+        Bson(bson::Bson::Int32(value as i32))
+    }
+}
+
+impl From<u64> for Bson {
+    fn from(value: u64) -> Self {
+        Bson(bson::Bson::Int64(value as i64))
+    }
+}
+
 impl<T> TryFrom<Bson> for De<T>
 where
     T: serde::de::DeserializeOwned,
 {
     type Error = de::Error;
     fn try_from(value: Bson) -> Result<Self, Self::Error> {
-        Ok(De(bson::from_bson(value.0).map_err(|e| {
-            bson::de::Error::custom(e)
-        })?))
+        Ok(De(
+            bson::from_bson(value.0).map_err(|e| bson::de::Error::custom(e))?
+        ))
     }
 }
 
@@ -187,9 +197,9 @@ where
 {
     type Error = ser::Error;
     fn try_from(value: Ser<T>) -> Result<Self, Self::Error> {
-        Ok(Bson(bson::to_bson(&value.0).map_err(|e| {
-            bson::ser::Error::custom(e)
-        })?))
+        Ok(Bson(
+            bson::to_bson(&value.0).map_err(|e| bson::ser::Error::custom(e))?,
+        ))
     }
 }
 
@@ -309,12 +319,10 @@ impl TryFrom<Bson> for bool {
         let inner = bson.0;
         match inner {
             bson::Bson::Boolean(b) => Ok(b),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Bool(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Bool(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -328,16 +336,15 @@ impl TryFrom<Bson> for char {
                 if s.len() == 1 {
                     return Ok(s.chars().next().unwrap());
                 }
-                Err(bson::de::Error::custom(
-                    format!("invalid value, expected a char but found a string `{}`", s),
-                ))
+                Err(bson::de::Error::custom(format!(
+                    "invalid value, expected a char but found a string `{}`",
+                    s
+                )))
             }
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::String(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::String(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -349,18 +356,17 @@ impl TryFrom<Bson> for f32 {
         match inner {
             bson::Bson::Double(f) => {
                 if f < (Self::MIN as f64) || f > (Self::MAX as f64) {
-                    return Err(bson::de::Error::custom(
-                        format!("invalid value, could not coerce `{}` into an f32", f),
-                    ));
+                    return Err(bson::de::Error::custom(format!(
+                        "invalid value, could not coerce `{}` into an f32",
+                        f
+                    )));
                 }
                 Ok(f as f32)
             }
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Double(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Double(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -371,12 +377,10 @@ impl TryFrom<Bson> for f64 {
         let inner = bson.0;
         match inner {
             bson::Bson::Double(f) => Ok(f),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Double(...)` but found `{}`",
-                    inner
-                ),
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Double(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -388,18 +392,17 @@ impl TryFrom<Bson> for i8 {
         match inner {
             bson::Bson::Int32(i) => {
                 if i < (Self::MIN as i32) || i > (Self::MAX as i32) {
-                    return Err(bson::de::Error::custom(
-                        format!("invalid value, could not coerce `{}` into an i8", i)
-                    ));
+                    return Err(bson::de::Error::custom(format!(
+                        "invalid value, could not coerce `{}` into an i8",
+                        i
+                    )));
                 }
                 Ok(i as i8)
             }
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Int32(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Int32(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -411,18 +414,17 @@ impl TryFrom<Bson> for i16 {
         match inner {
             bson::Bson::Int32(i) => {
                 if i < (Self::MIN as i32) || i > (Self::MAX as i32) {
-                    return Err(bson::de::Error::custom(
-                        format!("invalid value, could not coerce `{}` into an i16", i),
-                    ));
+                    return Err(bson::de::Error::custom(format!(
+                        "invalid value, could not coerce `{}` into an i16",
+                        i
+                    )));
                 }
                 Ok(i as i16)
             }
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Int32(...)` but found `{}`",
-                    inner
-                ),
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Int32(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -433,12 +435,10 @@ impl TryFrom<Bson> for i32 {
         let inner = bson.0;
         match inner {
             bson::Bson::Int32(i) => Ok(i),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Int32(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Int32(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -449,12 +449,10 @@ impl TryFrom<Bson> for i64 {
         let inner = bson.0;
         match inner {
             bson::Bson::Int64(i) => Ok(i),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Int64(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Int64(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -466,18 +464,17 @@ impl TryFrom<Bson> for isize {
         match inner {
             bson::Bson::Int64(i) => {
                 if i < (Self::MIN as i64) || i > (Self::MAX as i64) {
-                    return Err(bson::de::Error::custom(
-                        format!("invalid value, could not coerce `{}` into an isize", i)
-                    ));
+                    return Err(bson::de::Error::custom(format!(
+                        "invalid value, could not coerce `{}` into an isize",
+                        i
+                    )));
                 }
                 Ok(i as isize)
             }
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Int64(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Int64(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -489,18 +486,17 @@ impl TryFrom<Bson> for u8 {
         match inner {
             bson::Bson::Int32(i) => {
                 if i < (Self::MIN as i32) || i > (Self::MAX as i32) {
-                    return Err(bson::de::Error::custom(
-                        format!("invalid value, could not coerce `{}` into an u8", i)
-                    ));
+                    return Err(bson::de::Error::custom(format!(
+                        "invalid value, could not coerce `{}` into an u8",
+                        i
+                    )));
                 }
                 Ok(i as u8)
             }
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Int32(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Int32(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -512,18 +508,17 @@ impl TryFrom<Bson> for u16 {
         match inner {
             bson::Bson::Int32(i) => {
                 if i < (Self::MIN as i32) || i > (Self::MAX as i32) {
-                    return Err(bson::de::Error::custom(
-                        format!("invalid value, could not coerce `{}` into an u16", i)
-                    ));
+                    return Err(bson::de::Error::custom(format!(
+                        "invalid value, could not coerce `{}` into an u16",
+                        i
+                    )));
                 }
                 Ok(i as u16)
             }
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Int32(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Int32(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -534,12 +529,10 @@ impl TryFrom<Bson> for u32 {
         let inner = bson.0;
         match inner {
             bson::Bson::Int32(i) => Ok(i as u32),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Int32(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Int32(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -550,12 +543,10 @@ impl TryFrom<Bson> for u64 {
         let inner = bson.0;
         match inner {
             bson::Bson::Int64(i) => Ok(i as u64),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Int64(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Int64(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -566,12 +557,10 @@ impl TryFrom<Bson> for usize {
         let inner = bson.0;
         match inner {
             bson::Bson::Int64(i) => Ok(i as usize),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Int64(...)` but found `{}`",
-                    inner
-                )
-            )),
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Int64(...)` but found `{}`",
+                inner
+            ))),
         }
     }
 }
@@ -582,12 +571,10 @@ impl TryFrom<Bson> for String {
         let inner = bson.0;
         match inner {
             bson::Bson::String(s) => Ok(s),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::String(...)` but found `{}`",
-                    inner
-                )
-            )
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::String(...)` but found `{}`",
+                inner
+            ))
             .into()),
         }
     }
@@ -614,12 +601,10 @@ where
                 }
                 Ok(m)
             }
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Document(...)` but found `{}`",
-                    inner
-                )
-            )
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Document(...)` but found `{}`",
+                inner
+            ))
             .into()),
         }
     }
@@ -638,12 +623,10 @@ where
                 .into_iter()
                 .map(|x| T::try_from(Bson(x)).map_err(|e| e.into()))
                 .collect(),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Array(...)` but found `{}`",
-                    inner
-                )
-            )
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Array(...)` but found `{}`",
+                inner
+            ))
             .into()),
         }
     }
@@ -680,12 +663,10 @@ where
                 .into_iter()
                 .map(|x| T::try_from(Bson(x)).map_err(|e| e.into()))
                 .collect(),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::Array(...)` but found `{}`",
-                    inner
-                )
-            )
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::Array(...)` but found `{}`",
+                inner
+            ))
             .into()),
         }
     }
@@ -698,12 +679,10 @@ impl TryFrom<Bson> for chrono::DateTime<chrono::Utc> {
         let inner = bson.0;
         match inner {
             bson::Bson::DateTime(dt) => Ok(dt),
-            _ => Err(bson::de::Error::custom(
-                format!(
-                    "invalid variant, expected `Bson::DateTime(...)` but found `{}`",
-                    inner
-                )
-            )
+            _ => Err(bson::de::Error::custom(format!(
+                "invalid variant, expected `Bson::DateTime(...)` but found `{}`",
+                inner
+            ))
             .into()),
         }
     }

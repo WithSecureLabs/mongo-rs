@@ -540,7 +540,7 @@ impl Client {
     where
         C: AsFilter<F> + Collection,
         F: Filter,
-        T: DeserializeOwned + Unpin + Serialize,
+        T: DeserializeOwned + Unpin + Serialize + Send + Sync,
     {
         let mut find: query::Find<C> = query::Find::new();
         if let Some(filter) = filter {

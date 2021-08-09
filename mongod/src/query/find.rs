@@ -258,7 +258,7 @@ impl<C: Collection> Find<C> {
     /// This method fails if the mongodb encountered an error.
     pub async fn query<T>(self, client: &Client) -> crate::Result<Cursor<T>>
     where
-        T: DeserializeOwned + Unpin + Serialize,
+        T: DeserializeOwned + Unpin + Serialize + Send + Sync,
     {
         client
             .database()
