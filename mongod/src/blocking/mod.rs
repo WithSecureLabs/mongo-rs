@@ -38,4 +38,4 @@ mod cursor;
 
 pub use self::client::{Client, ClientBuilder};
 pub(crate) use self::client::{Request, Response};
-pub use self::cursor::Cursor;
+pub use self::cursor::{Cursor, TypedCursor};

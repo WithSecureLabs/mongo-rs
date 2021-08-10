@@ -14,6 +14,7 @@ use mongodb::options::{
 };
 use url::Url;
 
+use super::TypedCursor;
 use crate::collection::Collection;
 use crate::filter::{AsFilter, Filter};
 use crate::query;
@@ -533,7 +534,7 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub async fn find<C, F>(&self, filter: Option<F>) -> crate::Result<mongodb::Cursor<Document>>
+    pub async fn find<C, F>(&self, filter: Option<F>) -> crate::Result<TypedCursor<C>>
     where
         C: AsFilter<F> + Collection,
         F: Filter,
@@ -553,7 +554,7 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error, or if the found document is invalid.
-    pub async fn find_one<C, F>(&self, filter: F) -> crate::Result<Option<C>>
+    pub async fn find_one<C, F>(&self, filter: F) -> crate::Result<Option<(ObjectId, C)>>
     where
         C: AsFilter<F> + Collection,
         F: Filter,
@@ -562,9 +563,7 @@ impl Client {
         let find: query::Find<C> = query::Find::new();
         let mut cursor = find.filter(filter)?.query(&self).await?;
         if let Some(res) = cursor.next().await {
-            let doc = res.map_err(crate::error::mongodb)?;
-            let doc = C::from_document(doc)?;
-            return Ok(Some(doc));
+            return Ok(Some(res?));
         }
         Ok(None)
     }

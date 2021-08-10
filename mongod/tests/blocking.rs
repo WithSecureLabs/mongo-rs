@@ -30,7 +30,7 @@ mod wrapper {
         let mut count: u32 = 0;
         let mut cursor = client.find::<User, _>(None).unwrap();
         while let Some(res) = cursor.next() {
-            let _user = res.unwrap();
+            let (_id, _user) = res.unwrap();
             count += 1;
         }
         assert_eq!(count, 2);

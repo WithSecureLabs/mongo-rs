@@ -3,12 +3,11 @@ use std::time::Duration;
 
 use mongodb::bson::Document;
 use mongodb::options::{Collation, CursorType, FindOptions, Hint, ReadConcern, SelectionCriteria};
-use mongodb::Cursor;
 
 use crate::collection::Collection;
 use crate::field::{AsField, Field};
 use crate::filter::{AsFilter, Filter};
-use crate::r#async::Client;
+use crate::r#async::{Client, TypedCursor};
 use crate::sort::Sort;
 
 /// A querier to find documents in a MongoDB collection.
@@ -38,8 +37,8 @@ use crate::sort::Sort;
 ///     .await
 ///     .unwrap();
 /// while let Some(res) = cursor.next().await {
-///     if let Ok(user) = res {
-///         println!("{:?}", user);
+///     if let Ok((id, user)) = res {
+///         println!("{} - {:?}", id, user);
 ///     }
 /// }
 /// # Ok(())
@@ -253,12 +252,13 @@ impl<C: Collection> Find<C> {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub async fn query(self, client: &Client) -> crate::Result<Cursor<Document>> {
+    pub async fn query(self, client: &Client) -> crate::Result<TypedCursor<C>> {
         client
             .database()
             .collection::<Document>(C::COLLECTION)
             .find(self.filter, self.options)
             .await
+            .map(|cur| TypedCursor::from(cur))
             .map_err(crate::error::mongodb)
     }
 
@@ -275,14 +275,14 @@ impl<C: Collection> Find<C> {
     pub fn blocking(
         self,
         client: &crate::blocking::Client,
-    ) -> crate::Result<crate::blocking::Cursor> {
+    ) -> crate::Result<crate::blocking::TypedCursor<C>> {
         let resp = client.execute(crate::blocking::Request::Find(
             C::COLLECTION,
             self.filter,
             self.options,
         ))?;
         if let crate::blocking::Response::Find(r) = resp {
-            return Ok(r);
+            return Ok(crate::blocking::TypedCursor::from(r));
         }
         Err(crate::error::runtime(
             "incorrect response from blocking client",

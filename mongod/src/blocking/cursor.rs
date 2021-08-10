@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use bson::Document;
+use bson::{oid::ObjectId, Document};
 use futures::stream::StreamExt;
 
 use crate::collection::Collection;
@@ -13,7 +13,7 @@ enum Response {
     Next(Option<crate::Result<Document>>),
 }
 
-/// A blocking version of the [`mongodb::Cursor`](https://docs.rs/mongodb/1.1.1/mongodb/struct.Cursor.html).
+/// A blocking version of the [`mongodb::Cursor`](https://docs.rs/mongodb/2.0.0/mongodb/struct.Cursor.html).
 ///
 /// This wraps the async `Cursor` so that is can be called in a synchronous fashion, please see the
 /// asynchronous description for more information about the cursor.
@@ -66,9 +66,18 @@ pub struct TypedCursor<T>
 where
     T: Collection,
 {
+    cursor: Cursor,
     document_type: PhantomData<T>,
+}
 
-    tx: tokio::sync::mpsc::UnboundedSender<(Request, std::sync::mpsc::Sender<Response>)>,
+impl<T> TypedCursor<T>
+where
+    T: Collection,
+{
+    /// Allow access to the wrapped blocking `Cursor`
+    pub fn into_inner(self) -> Cursor {
+        self.cursor
+    }
 }
 
 impl<T> From<Cursor> for TypedCursor<T>
@@ -77,8 +86,8 @@ where
 {
     fn from(cursor: Cursor) -> Self {
         TypedCursor {
+            cursor,
             document_type: PhantomData,
-            tx: cursor.tx,
         }
     }
 }
@@ -87,21 +96,14 @@ impl<T> Iterator for TypedCursor<T>
 where
     T: Collection,
 {
-    type Item = crate::Result<T>;
+    type Item = crate::Result<(ObjectId, T)>;
     fn next(&mut self) -> Option<Self::Item> {
-        let (tx, rx) = std::sync::mpsc::channel();
-        self.tx
-            .send((Request::Next, tx))
-            .expect("core thread panicked");
-        let res = rx
-            .recv()
-            .expect("could not get response from mongo runtime");
-        let Response::Next(c) = res;
-        let resp = match c {
-            Some(Ok(b)) => Some(T::from_document(b)),
-            Some(Err(e)) => Some(Err(crate::error::mongodb(e))),
-            None => None,
-        };
-        resp
+        let next = self.cursor.next();
+
+        next.map(|res| {
+            let doc = res?;
+            let oid = doc.get_object_id("_id").map_err(crate::error::bson)?;
+            Ok((oid, T::from_document(doc)?))
+        })
     }
 }

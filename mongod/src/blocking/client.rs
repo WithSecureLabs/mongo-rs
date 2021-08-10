@@ -10,7 +10,7 @@ use mongodb::options::{
 };
 use mongodb::results::{DeleteResult, InsertManyResult, UpdateResult};
 
-use super::cursor::Cursor;
+use super::cursor::{Cursor, TypedCursor};
 use crate::collection::Collection;
 use crate::filter::{AsFilter, Filter};
 use crate::query;
@@ -255,7 +255,7 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub fn find<C, F>(&self, filter: Option<F>) -> crate::Result<Cursor>
+    pub fn find<C, F>(&self, filter: Option<F>) -> crate::Result<TypedCursor<C>>
     where
         C: AsFilter<F> + Collection,
         F: Filter,
@@ -275,7 +275,7 @@ impl Client {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error, or if the found document is invalid.
-    pub fn find_one<C, F>(&self, filter: F) -> crate::Result<Option<C>>
+    pub fn find_one<C, F>(&self, filter: F) -> crate::Result<Option<(ObjectId, C)>>
     where
         C: AsFilter<F> + Collection,
         F: Filter,
@@ -284,9 +284,7 @@ impl Client {
         let find: query::Find<C> = query::Find::new();
         let mut cursor = find.filter(filter)?.blocking(&self)?;
         if let Some(res) = cursor.next() {
-            let document = res.map_err(crate::error::mongodb)?;
-            let document = C::from_document(document)?;
-            return Ok(Some(document));
+            return Ok(Some(res?));
         }
         Ok(None)
     }

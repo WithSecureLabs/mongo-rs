@@ -89,8 +89,8 @@
 //!
 //! let mut cursor = client.find::<User, _>(None).await.unwrap();
 //! while let Some(res) = cursor.next().await {
-//!     if let Ok(user) = res {
-//!         println!("{:?}", user);
+//!     if let Ok((id, user)) = res {
+//!         println!("{} - {:?}", id, user);
 //!     }
 //! }
 //! # Ok(())
