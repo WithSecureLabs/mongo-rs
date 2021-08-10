@@ -116,7 +116,7 @@ fn impl_enum_struct(
                 let mut #member: Option<#ty> = None;
             }
         });
-        let values = v.fields.iter().map(|f| impl_struct_try_from_bson_field(&f));
+        let values = v.fields.iter().map(|f| impl_struct_try_from_bson_field(f));
         let missing = v.fields.iter().map(|f| {
             let id = member_to_id(&f.member);
             let member = member_to_ident(&f.member);
@@ -353,7 +353,7 @@ fn impl_struct(
             let mut #member: Option<#ty> = None;
         }
     });
-    let values = fields.iter().map(|f| impl_struct_try_from_bson_field(&f));
+    let values = fields.iter().map(|f| impl_struct_try_from_bson_field(f));
     let missing = fields.iter().map(|f| {
         let id = member_to_id(&f.member);
         let member = &f.member;
@@ -411,7 +411,7 @@ fn impl_struct(
 fn impl_struct_try_from_bson_field(f: &Field) -> TokenStream {
     let member = member_to_ident(&f.member);
     let id = member_to_id(&f.member);
-    let optional = is_option(&f.ty);
+    let optional = is_option(f.ty);
     let ty = &f.ty;
     if f.attrs.serde {
         quote! {

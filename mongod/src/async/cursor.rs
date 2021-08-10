@@ -34,7 +34,7 @@ where
 {
     fn from(cursor: mongodb::Cursor<Document>) -> Self {
         TypedCursor {
-            cursor: cursor,
+            cursor,
             document_type: PhantomData,
         }
     }

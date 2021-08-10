@@ -246,8 +246,10 @@ impl ClientBuilder {
         {
             let mut credentials = Credential::default();
             if self.username.is_some() || url.username() != "" {
-                credentials.username = self.username.or(Some(url.username().to_string()));
-                credentials.password = self.password.or(url.password().map(|p| p.to_string()));
+                credentials.username = self.username.or_else(|| Some(url.username().to_string()));
+                credentials.password = self
+                    .password
+                    .or_else(|| url.password().map(|p| p.to_string()));
             }
             if auth_source.is_some() {
                 credentials.source = auth_source;
@@ -505,7 +507,7 @@ impl Client {
         if let Some(filter) = filter {
             delete = delete.filter::<F>(filter)?
         }
-        delete.query(&self).await
+        delete.query(self).await
     }
 
     /// Convenience method to delete one document from a collection using a given filter.
@@ -521,7 +523,7 @@ impl Client {
         let deleted = query::Delete::<C>::new()
             .many(false)
             .filter::<F>(filter)?
-            .query(&self)
+            .query(self)
             .await?;
         Ok(deleted > 0)
     }
@@ -543,7 +545,7 @@ impl Client {
         if let Some(filter) = filter {
             find = find.filter(filter)?;
         }
-        find.query(&self).await
+        find.query(self).await
     }
 
     /// Convenience method to find a document in a collection using a given filter.
@@ -561,7 +563,7 @@ impl Client {
     {
         // NOTE: We don't wanna make another builder so we just eat the cost of getting a cursor...
         let find: query::Find<C> = query::Find::new();
-        let mut cursor = find.filter(filter)?.query(&self).await?;
+        let mut cursor = find.filter(filter)?.query(self).await?;
         if let Some(res) = cursor.next().await {
             return Ok(Some(res?));
         }
@@ -577,7 +579,7 @@ impl Client {
     where
         C: Collection,
     {
-        let result = query::Insert::new().query(&self, documents).await?;
+        let result = query::Insert::new().query(self, documents).await?;
         Ok(result
             .into_iter()
             .filter_map(|(k, v)| match v {
@@ -597,11 +599,9 @@ impl Client {
         C: Collection,
     {
         // NOTE: We don't wanna make another builder so we just eat the cost of allocating a vec...
-        let result = query::Insert::new().query(&self, vec![document]).await?;
-        if let Some((_, v)) = result.into_iter().next() {
-            if let bson::Bson::ObjectId(id) = v {
-                return Ok(id);
-            }
+        let result = query::Insert::new().query(self, vec![document]).await?;
+        if let Some((_, bson::Bson::ObjectId(id))) = result.into_iter().next() {
+            return Ok(id);
         }
         Err(crate::error::mongodb(
             "failed to insert document into mongo",
@@ -620,7 +620,7 @@ impl Client {
     {
         query::Replace::new()
             .filter::<F>(filter)?
-            .query(&self, document)
+            .query(self, document)
             .await
     }
 
@@ -637,7 +637,7 @@ impl Client {
     {
         let updated = query::Update::<C>::new()
             .filter::<F>(filter)?
-            .query::<U>(&self, updates)
+            .query::<U>(self, updates)
             .await?;
         Ok(updated)
     }
@@ -656,7 +656,7 @@ impl Client {
         let updated = query::Update::<C>::new()
             .many(false)
             .filter::<F>(filter)?
-            .query::<U>(&self, updates)
+            .query::<U>(self, updates)
             .await?;
         if updated > 0 {
             return Ok(true);
@@ -678,7 +678,7 @@ impl Client {
         let updated = query::Update::<C>::new()
             .upsert(true)
             .filter::<F>(filter)?
-            .query::<U>(&self, updates)
+            .query::<U>(self, updates)
             .await?;
         Ok(updated)
     }
@@ -698,7 +698,7 @@ impl Client {
             .many(false)
             .upsert(true)
             .filter::<F>(filter)?
-            .query::<U>(&self, updates)
+            .query::<U>(self, updates)
             .await?;
         if updated > 0 {
             return Ok(true);

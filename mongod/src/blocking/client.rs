@@ -227,7 +227,7 @@ impl Client {
         if let Some(filter) = filter {
             delete = delete.filter(filter)?;
         }
-        delete.blocking(&self)
+        delete.blocking(self)
     }
 
     /// Convenience method to delete one document from a collection using a given filter.
@@ -243,7 +243,7 @@ impl Client {
         let deleted = query::Delete::<C>::new()
             .many(false)
             .filter::<F>(filter)?
-            .blocking(&self)?;
+            .blocking(self)?;
         Ok(deleted > 0)
     }
 
@@ -264,7 +264,7 @@ impl Client {
         if let Some(filter) = filter {
             find = find.filter(filter)?;
         }
-        find.blocking(&self)
+        find.blocking(self)
     }
 
     /// Convenience method to find a document in a collection using a given filter.
@@ -282,7 +282,7 @@ impl Client {
     {
         // NOTE: We don't wanna make another builder so we just eat the cost of getting a cursor...
         let find: query::Find<C> = query::Find::new();
-        let mut cursor = find.filter(filter)?.blocking(&self)?;
+        let mut cursor = find.filter(filter)?.blocking(self)?;
         if let Some(res) = cursor.next() {
             return Ok(Some(res?));
         }
@@ -298,7 +298,7 @@ impl Client {
     where
         C: Collection,
     {
-        let result = query::Insert::new().blocking(&self, documents)?;
+        let result = query::Insert::new().blocking(self, documents)?;
         Ok(result
             .into_iter()
             .filter_map(|(k, v)| match v {
@@ -318,11 +318,9 @@ impl Client {
         C: Collection,
     {
         // NOTE: We don't wanna make another builder so we just eat the cost of allocating a vec...
-        let result = query::Insert::new().blocking(&self, vec![document])?;
-        if let Some((_, v)) = result.into_iter().next() {
-            if let bson::Bson::ObjectId(id) = v {
-                return Ok(id);
-            }
+        let result = query::Insert::new().blocking(self, vec![document])?;
+        if let Some((_, bson::Bson::ObjectId(id))) = result.into_iter().next() {
+            return Ok(id);
         }
         Err(crate::error::mongodb(
             "failed to insert document into mongo",
@@ -341,7 +339,7 @@ impl Client {
     {
         query::Replace::new()
             .filter::<F>(filter)?
-            .blocking(&self, document)
+            .blocking(self, document)
     }
 
     /// Convenience method to update documents in a collection.
@@ -357,7 +355,7 @@ impl Client {
     {
         let updated = query::Update::<C>::new()
             .filter::<F>(filter)?
-            .blocking::<U>(&self, updates)?;
+            .blocking::<U>(self, updates)?;
         Ok(updated)
     }
 
@@ -375,7 +373,7 @@ impl Client {
         let updated = query::Update::<C>::new()
             .many(false)
             .filter::<F>(filter)?
-            .blocking::<U>(&self, updates)?;
+            .blocking::<U>(self, updates)?;
         if updated > 0 {
             return Ok(true);
         }
@@ -396,7 +394,7 @@ impl Client {
         let updated = query::Update::<C>::new()
             .upsert(true)
             .filter::<F>(filter)?
-            .blocking::<U>(&self, updates)?;
+            .blocking::<U>(self, updates)?;
         Ok(updated)
     }
 
@@ -415,7 +413,7 @@ impl Client {
             .many(false)
             .upsert(true)
             .filter::<F>(filter)?
-            .blocking::<U>(&self, updates)?;
+            .blocking::<U>(self, updates)?;
         if updated > 0 {
             return Ok(true);
         }

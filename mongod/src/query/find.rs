@@ -258,7 +258,7 @@ impl<C: Collection> Find<C> {
             .collection::<Document>(C::COLLECTION)
             .find(self.filter, self.options)
             .await
-            .map(|cur| TypedCursor::from(cur))
+            .map(TypedCursor::from)
             .map_err(crate::error::mongodb)
     }
 

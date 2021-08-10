@@ -16,12 +16,12 @@ where
     Nested(Sort<T>),
 }
 
-impl<T> Into<Bson> for Order<T>
+impl<T> From<Order<T>> for Bson
 where
     T: Field + Into<String>,
 {
-    fn into(self) -> Bson {
-        match self {
+    fn from(order: Order<T>) -> Self {
+        match order {
             // Mongo uses '1' and '-1' to denote sort order in the document
             // given to queries' '$sort' property
             Order::Asc => Bson::Int32(1),

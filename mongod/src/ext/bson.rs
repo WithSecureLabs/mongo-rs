@@ -186,7 +186,7 @@ where
     type Error = de::Error;
     fn try_from(value: Bson) -> Result<Self, Self::Error> {
         Ok(De(
-            bson::from_bson(value.0).map_err(|e| bson::de::Error::custom(e))?
+            bson::from_bson(value.0).map_err(bson::de::Error::custom)?
         ))
     }
 }
@@ -198,7 +198,7 @@ where
     type Error = ser::Error;
     fn try_from(value: Ser<T>) -> Result<Self, Self::Error> {
         Ok(Bson(
-            bson::to_bson(&value.0).map_err(|e| bson::ser::Error::custom(e))?,
+            bson::to_bson(&value.0).map_err(bson::ser::Error::custom)?,
         ))
     }
 }
