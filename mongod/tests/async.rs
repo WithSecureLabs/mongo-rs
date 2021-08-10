@@ -1,5 +1,5 @@
 use futures::stream::StreamExt;
-use mongod::{AsFilter, AsUpdate, Comparator, Updates};
+use mongod::{AsFilter, AsUpdate, Comparator, TypedCursor, Updates};
 
 use user::User;
 
@@ -25,7 +25,8 @@ async fn async_client() {
 
     // Fetch
     let mut count: u32 = 0;
-    let mut cursor = client.find::<User, _>(None).await.unwrap();
+    let cursor = client.find::<User, _>(None).await.unwrap();
+    let mut cursor: TypedCursor<User> = TypedCursor::from(cursor);
     while let Some(res) = cursor.next().await {
         let _user = res.unwrap();
         count += 1;

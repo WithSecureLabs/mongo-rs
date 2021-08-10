@@ -58,10 +58,40 @@ fn impl_struct(
     attrs: &attr::Container,
 ) -> proc_macro2::TokenStream {
     let collection = if let Some(col) = &attrs.collection {
+        let from = if attrs.bson == attr::BsonMode::Serde {
+            quote! {
+                _mongo::bson::from_document(document).map_err(_mongo::Error::invalid_document)
+            }
+        } else {
+            quote! {
+                Self::try_from(_mongo::bson::Bson::Document(document)).map_err(_mongo::Error::invalid_document)
+            }
+        };
+        let into = if attrs.bson == attr::BsonMode::Serde {
+            quote! {
+                let b = _mongo::bson::to_bson(&self).map_err(_mongo::Error::invalid_document)?;
+            }
+        } else {
+            quote! {
+                let b = _mongo::bson::Bson::try_from(self).map_err(_mongo::Error::invalid_document)?;
+            }
+        };
         quote! {
             #[automatically_derived]
             impl _mongo::Collection for #name {
                 const COLLECTION: &'static str = #col;
+
+                fn from_document(document: _mongo::bson::Document) -> Result<Self, _mongo::Error> {
+                    #from
+                }
+
+                fn into_document(self) -> Result<_mongo::bson::Document, _mongo::Error> {
+                    #into
+                    match b {
+                        _mongo::bson::Bson::Document(doc) => Ok(doc),
+                        _ => Err(_mongo::Error::invalid_document("not a bson document")),
+                    }
+                }
             }
         }
     } else {

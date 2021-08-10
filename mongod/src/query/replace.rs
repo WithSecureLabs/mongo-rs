@@ -132,7 +132,7 @@ impl<C: Collection> Replace<C> {
         let result = client
             .database()
             .collection(C::COLLECTION)
-            .replace_one(filter, document, self.options)
+            .replace_one(filter, document.into_document()?, self.options)
             .await
             .map_err(crate::error::mongodb)?;
         if result.modified_count > 0 {
@@ -161,7 +161,7 @@ impl<C: Collection> Replace<C> {
         let resp = client.execute(crate::blocking::Request::Replace(
             C::COLLECTION,
             filter,
-            bson::to_document(&document).map_err(crate::error::bson)?,
+            document.into_document()?,
             self.options,
         ))?;
         if let crate::blocking::Response::Replace(r) = resp {

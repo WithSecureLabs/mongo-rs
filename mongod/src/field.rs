@@ -5,12 +5,10 @@
 /// Defining an `enum` as a set of fields for use in a mongo query.
 ///
 /// ```
-/// use serde::{Deserialize, Serialize};
-///
-/// # use mongod_derive::Mongo;
+/// # use mongod_derive::{Bson, Mongo};
 /// use mongod::Field;
 ///
-/// #[derive(Mongo, Deserialize, Serialize)]
+/// #[derive(Bson, Mongo)]
 /// #[mongo(collection="users")]
 /// pub struct User {
 ///     pub name: String,
@@ -39,12 +37,10 @@ pub trait Field {}
 /// Defining an `enum` as a set of fields for use in a mongo query.
 ///
 /// ```
-/// use serde::{Deserialize, Serialize};
-///
 /// # use mongod_derive::{Bson, Mongo};
 /// use mongod::{AsField, Field};
 ///
-/// #[derive(Mongo, Deserialize, Serialize)]
+/// #[derive(Bson, Mongo)]
 /// #[mongo(collection="users")]
 /// pub struct User {
 ///     pub name: String,

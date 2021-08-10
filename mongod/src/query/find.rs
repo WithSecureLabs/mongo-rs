@@ -19,14 +19,13 @@ use crate::sort::Sort;
 ///
 /// ```no_run
 /// # async fn doc() -> Result<(), mongod::Error> {
-/// # use mongod_derive::Mongo;
+/// # use mongod_derive::{Bson, Mongo};
 ///
 /// use futures::stream::StreamExt;
-/// use serde::{Deserialize, Serialize};
 ///
 /// use mongod::Collection;
 ///
-/// #[derive(Debug, Mongo, Deserialize, Serialize)]
+/// #[derive(Debug, Bson, Mongo)]
 /// #[mongo(collection="users", field, filter, update)]
 /// pub struct User {
 ///     name: String,
@@ -254,10 +253,10 @@ impl<C: Collection> Find<C> {
     /// # Errors
     ///
     /// This method fails if the mongodb encountered an error.
-    pub async fn query(self, client: &Client) -> crate::Result<Cursor<C>> {
+    pub async fn query(self, client: &Client) -> crate::Result<Cursor<Document>> {
         client
             .database()
-            .collection::<C>(C::COLLECTION)
+            .collection::<Document>(C::COLLECTION)
             .find(self.filter, self.options)
             .await
             .map_err(crate::error::mongodb)
@@ -276,14 +275,14 @@ impl<C: Collection> Find<C> {
     pub fn blocking(
         self,
         client: &crate::blocking::Client,
-    ) -> crate::Result<crate::blocking::Cursor<C>> {
+    ) -> crate::Result<crate::blocking::Cursor> {
         let resp = client.execute(crate::blocking::Request::Find(
             C::COLLECTION,
             self.filter,
             self.options,
         ))?;
         if let crate::blocking::Response::Find(r) = resp {
-            return Ok(r.to_cursor());
+            return Ok(r);
         }
         Err(crate::error::runtime(
             "incorrect response from blocking client",

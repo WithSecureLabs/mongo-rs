@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use bson::Bson;
+use bson::{Bson, Document};
 use mongodb::options::{InsertManyOptions, WriteConcern};
 
 use crate::collection::Collection;
@@ -96,6 +96,10 @@ impl<C: Collection> Insert<C> {
     where
         C: Collection,
     {
+        let documents = documents
+            .into_iter()
+            .map(|s| s.into_document())
+            .collect::<Result<Vec<Document>, _>>()?;
         client
             .database()
             .collection(C::COLLECTION)
@@ -127,8 +131,8 @@ impl<C: Collection> Insert<C> {
     {
         let documents = documents
             .into_iter()
-            .map(|s| bson::to_document(&s))
-            .collect::<Result<Vec<bson::Document>, _>>()
+            .map(|s| s.into_document())
+            .collect::<Result<Vec<Document>, _>>()
             .map_err(crate::error::bson)?;
         let resp = client.execute(crate::blocking::Request::Insert(
             C::COLLECTION,

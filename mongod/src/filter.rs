@@ -86,14 +86,12 @@ where
 /// ```
 /// use std::convert::TryFrom;
 ///
-/// use serde::{Deserialize, Serialize};
-///
 /// # use mongod_derive::{Bson, Mongo};
 /// use mongod::bson::Document;
 /// use mongod::{AsFilter, Filter, Comparator, Error};
 /// use mongod::ext::bson::Bson;
 ///
-/// #[derive(Mongo, Deserialize, Serialize)]
+/// #[derive(Bson, Mongo)]
 /// #[mongo(collection="users")]
 /// pub struct User {
 ///     pub name: String,

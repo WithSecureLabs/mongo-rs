@@ -17,10 +17,8 @@
 //! Defining an example collection using derive.
 //!
 //! ```
-//! use serde::{Deserialize, Serialize};
-//!
-//! # use mongod_derive::Mongo;
-//! #[derive(Mongo, Deserialize, Serialize)]
+//! # use mongod_derive::{Bson, Mongo};
+//! #[derive(Bson, Mongo)]
 //! #[mongo(collection="users", field, filter, update)]
 //! pub struct User {
 //!     name: String,
@@ -45,9 +43,8 @@
 //! Deleting a user from the users collection.
 //!
 //! ```no_run
-//! # use mongod_derive::Mongo;
-//! # use serde::{Deserialize, Serialize};
-//! # #[derive(Mongo, Deserialize, Serialize)]
+//! # use mongod_derive::{Bson, Mongo};
+//! # #[derive(Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
@@ -75,9 +72,8 @@
 //! ```no_run
 //! # use std::convert::TryFrom;
 //! # use mongod_derive::{Bson, Mongo};
-//! # use serde::{Deserialize, Serialize};
 //! use bson::Document;
-//! # #[derive(Debug, Mongo, Deserialize, Serialize)]
+//! # #[derive(Debug, Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
@@ -106,9 +102,8 @@
 //! Inserting a user into the users collection.
 //!
 //! ```no_run
-//! # use mongod_derive::Mongo;
-//! # use serde::{Deserialize, Serialize};
-//! # #[derive(Debug, Mongo, Deserialize, Serialize)]
+//! # use mongod_derive::{Bson, Mongo};
+//! # #[derive(Debug, Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
@@ -136,8 +131,7 @@
 //!
 //! ```no_run
 //! # use mongod_derive::{Bson, Mongo};
-//! # use serde::{Deserialize, Serialize};
-//! # #[derive(Debug, Mongo, Deserialize, Serialize)]
+//! # #[derive(Debug, Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
@@ -170,8 +164,7 @@
 //!
 //! ```no_run
 //! # use mongod_derive::{Bson, Mongo};
-//! # use serde::{Deserialize, Serialize};
-//! # #[derive(Debug, Mongo, Deserialize, Serialize)]
+//! # #[derive(Debug, Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
@@ -234,7 +227,7 @@ pub use self::error::{Error, Kind as ErrorKind};
 pub use self::field::{AsField, Field};
 pub use self::filter::{AsFilter, Comparator, Filter};
 pub use self::query::Query;
-pub use self::r#async::{Client, ClientBuilder};
+pub use self::r#async::{Client, ClientBuilder, TypedCursor};
 pub use self::sort::{Order, Sort};
 pub use self::update::{AsUpdate, Update, Updates};
 

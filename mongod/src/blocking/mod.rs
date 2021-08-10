@@ -13,9 +13,8 @@
 //! example to fetch users from a collection.
 //!
 //! ```no_run
-//! # use mongod_derive::Mongo;
-//! # use serde::{Deserialize, Serialize};
-//! # #[derive(Debug, Mongo, Deserialize, Serialize)]
+//! # use mongod_derive::{Bson, Mongo};
+//! # #[derive(Debug, Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
 //! # pub struct User {
 //! #     name: String,
