@@ -19,8 +19,8 @@ Provides the following:
 
 ```toml
 futures = "0.3"
-mongod = { version = "0.1", features = ["derive"] }
-tokio = { version = "0.2", features = ["full"] }
+mongod = { version = "0.3", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
 ```
 
 ```rust
@@ -48,9 +48,8 @@ async fn main() {
   // Fetch all users in the users collection
   let mut cursor = client.find::<User, _>(None).await.unwrap();
   while let Some(res) = cursor.next().await {
-      if let Ok(doc) = res {
-          let user: User = User::from_document(doc).unwrap();
-          println!("{:?}", user);
+      if let Ok((id, user)) = res {
+          println!("{} - {:?}", id, user);
       }
   }
 
@@ -85,7 +84,7 @@ Example: see above.
 Not everything should be async and for that reason a blocking client is provided that can be used at the same time as the async client.
 
 ```toml
-mongod = { version = "0.1", features = ["blocking", "derive"] }
+mongod = { version = "0.3", features = ["blocking", "derive"] }
 ```
 
 ```rust
@@ -111,9 +110,8 @@ fn main() {
   // Fetch all users in the users collection
   let mut cursor = client.find::<User, _>(None).unwrap();
   while let Some(res) = cursor.next() {
-      if let Ok(doc) = res {
-          let user: User = User::from_document(doc).unwrap();
-          println!("{:?}", user);
+      if let Ok((id, user)) = res {
+          println!("{} - {:?}", user);
       }
   }
 
