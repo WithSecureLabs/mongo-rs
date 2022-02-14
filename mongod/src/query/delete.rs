@@ -14,7 +14,7 @@ use bson::Document;
 /// Delete all documents from a collection.
 ///
 /// ```no_run
-/// # async fn doc() -> Result<(), mongod::Error> {
+/// # mod wrapper {
 /// # use mongod_derive::{Bson, Mongo};
 ///
 /// #[derive(Bson, Mongo)]
@@ -23,6 +23,7 @@ use bson::Document;
 ///     name: String,
 /// }
 ///
+/// # async fn doc() -> Result<(), mongod::Error> {
 /// let client = mongod::Client::new();
 ///
 /// let deleted = mongod::query::Delete::<User>::new()
@@ -32,6 +33,7 @@ use bson::Document;
 ///
 /// println!("delete {} documents", deleted);
 /// # Ok(())
+/// # }
 /// # }
 /// ```
 #[derive(Clone)]

@@ -17,6 +17,7 @@
 //! Defining an example collection using derive.
 //!
 //! ```
+//! # mod wrapper {
 //! # use mongod_derive::{Bson, Mongo};
 //! #[derive(Bson, Mongo)]
 //! #[mongo(collection="users", field, filter, update)]
@@ -25,6 +26,7 @@
 //!     age: Option<u32>,
 //!     email: Option<String>,
 //! }
+//! # }
 //! ```
 //!
 //! ## Making requests
@@ -43,6 +45,7 @@
 //! Deleting a user from the users collection.
 //!
 //! ```no_run
+//! # mod wrapper {
 //! # use mongod_derive::{Bson, Mongo};
 //! # #[derive(Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
@@ -63,6 +66,7 @@
 //! println!("delete {} documents", deleted);
 //! # Ok(())
 //! # }
+//! # }
 //! ```
 //!
 //! ### Fetching
@@ -70,6 +74,7 @@
 //! Fetching users from the users collection.
 //!
 //! ```no_run
+//! # mod wrapper {
 //! # use std::convert::TryFrom;
 //! # use mongod_derive::{Bson, Mongo};
 //! use bson::Document;
@@ -95,6 +100,7 @@
 //! }
 //! # Ok(())
 //! # }
+//! # }
 //! ```
 //!
 //!T ### Inserting
@@ -102,6 +108,7 @@
 //! Inserting a user into the users collection.
 //!
 //! ```no_run
+//! # mod wrapper {
 //! # use mongod_derive::{Bson, Mongo};
 //! # #[derive(Debug, Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
@@ -123,6 +130,7 @@
 //! println!("(index: oid) {:?}", result);
 //! # Ok(())
 //! # }
+//! # }
 //! ```
 //!
 //! ### Replacing
@@ -130,6 +138,7 @@
 //! Replacing a user in the users collection.
 //!
 //! ```no_run
+//! # mod wrapper {
 //! # use mongod_derive::{Bson, Mongo};
 //! # #[derive(Debug, Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
@@ -156,6 +165,7 @@
 //! println!("{:?}", oid);
 //! # Ok(())
 //! # }
+//! # }
 //! ```
 //!
 //! ### Updating
@@ -163,6 +173,7 @@
 //! Updating a user in the users collection.
 //!
 //! ```no_run
+//! # mod wrapper {
 //! # use mongod_derive::{Bson, Mongo};
 //! # #[derive(Debug, Bson, Mongo)]
 //! # #[mongo(collection="users", field, filter, update)]
@@ -190,6 +201,7 @@
 //! let updated = client.update::<User, _, _>(filter, updates).await.unwrap();
 //! println!("updated {} documents", updated);
 //! # Ok(())
+//! # }
 //! # }
 //! ```
 //!

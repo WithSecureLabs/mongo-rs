@@ -14,7 +14,7 @@ use crate::r#async::Client;
 /// Insert a document into a collection.
 ///
 /// ```no_run
-/// # async fn doc() -> Result<(), mongod::Error> {
+/// # mod wrapper {
 /// # use mongod_derive::{Bson, Mongo};
 /// use serde::{Deserialize, Serialize};
 ///
@@ -24,6 +24,7 @@ use crate::r#async::Client;
 ///     name: String,
 /// }
 ///
+/// # async fn doc() -> Result<(), mongod::Error> {
 /// let client = mongod::Client::new();
 ///
 /// let user = User { name: "foo".to_owned() };
@@ -35,6 +36,7 @@ use crate::r#async::Client;
 ///
 /// println!("(index: oid) {:?}", result);
 /// # Ok(())
+/// # }
 /// # }
 /// ```
 #[derive(Clone)]

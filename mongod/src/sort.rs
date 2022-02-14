@@ -40,7 +40,7 @@ where
 /// Sorting a user collection by name.
 ///
 /// ```no_run
-/// # async fn doc() -> Result<(), mongod::Error> {
+/// # mod wrapper {
 /// use mongod::bson::Document;
 /// use mongod::{AsField, Field, Order, Query, Sort};
 /// use serde::{Deserialize, Serialize};
@@ -68,6 +68,7 @@ where
 ///     }
 /// }
 ///
+/// # async fn doc() -> Result<(), mongod::Error> {
 /// let client = mongod::Client::default();
 ///
 /// let mut sort = Sort::new();
@@ -79,6 +80,7 @@ where
 ///     .await
 ///     .unwrap();
 /// # Ok(())
+/// # }
 /// # }
 /// ```
 #[derive(Clone, Serialize)]

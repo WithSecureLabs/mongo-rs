@@ -5,6 +5,7 @@
 /// Defining an `enum` as a set of fields for use in a mongo query.
 ///
 /// ```
+/// # mod wrapper {
 /// # use mongod_derive::{Bson, Mongo};
 /// use mongod::Field;
 ///
@@ -27,6 +28,7 @@
 ///         }
 ///     }
 /// }
+/// # }
 /// ```
 pub trait Field {}
 
@@ -37,6 +39,7 @@ pub trait Field {}
 /// Defining an `enum` as a set of fields for use in a mongo query.
 ///
 /// ```
+/// # mod wrapper {
 /// # use mongod_derive::{Bson, Mongo};
 /// use mongod::{AsField, Field};
 ///
@@ -61,5 +64,6 @@ pub trait Field {}
 ///         }
 ///     }
 /// }
+/// # }
 /// ```
 pub trait AsField<F: Field + Into<String>> {}

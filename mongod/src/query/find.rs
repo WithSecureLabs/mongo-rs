@@ -17,7 +17,7 @@ use crate::sort::Sort;
 /// Find all documents from a collection.
 ///
 /// ```no_run
-/// # async fn doc() -> Result<(), mongod::Error> {
+/// # mod wrapper {
 /// # use mongod_derive::{Bson, Mongo};
 ///
 /// use futures::stream::StreamExt;
@@ -30,6 +30,7 @@ use crate::sort::Sort;
 ///     name: String,
 /// }
 ///
+/// # async fn doc() -> Result<(), mongod::Error> {
 /// let client = mongod::Client::new();
 ///
 /// let mut cursor = mongod::query::Find::<User>::new()
@@ -42,6 +43,7 @@ use crate::sort::Sort;
 ///     }
 /// }
 /// # Ok(())
+/// # }
 /// # }
 /// ```
 #[derive(Clone)]

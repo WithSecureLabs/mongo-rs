@@ -14,7 +14,7 @@ use crate::r#async::Client;
 /// Replace a document in a collection.
 ///
 /// ```no_run
-/// # async fn doc() -> Result<(), mongod::Error> {
+/// # mod wrapper {
 /// # use mongod_derive::{Bson, Mongo};
 ///
 /// use mongod::{AsFilter, Comparator};
@@ -26,6 +26,7 @@ use crate::r#async::Client;
 ///     name: String,
 /// }
 ///
+/// # async fn doc() -> Result<(), mongod::Error> {
 /// let client = mongod::Client::new();
 ///
 /// let mut filter = User::filter();
@@ -43,6 +44,7 @@ use crate::r#async::Client;
 ///     .unwrap();
 /// println!("{:?}", oid);
 /// # Ok(())
+/// # }
 /// # }
 /// ```
 #[derive(Clone)]

@@ -15,6 +15,7 @@ use crate::update::{AsUpdate, Updates};
 /// Updates some documents in a collection.
 ///
 /// ```no_run
+/// # mod wrapper {
 /// # use mongod_derive::{Bson, Mongo};
 /// use serde::{Deserialize, Serialize};
 ///
@@ -25,9 +26,9 @@ use crate::update::{AsUpdate, Updates};
 ///     age: Option<u32>,
 ///     email: Option<String>,
 /// }
-/// # async fn doc() -> Result<(), mongod::Error> {
 /// use mongod::{AsFilter, Comparator, AsUpdate};
 ///
+/// # async fn doc() -> Result<(), mongod::Error> {
 /// let client = mongod::Client::new();
 ///
 /// let mut filter = User::filter();
@@ -50,6 +51,7 @@ use crate::update::{AsUpdate, Updates};
 ///
 /// println!("updated {} documents", updated);
 /// # Ok(())
+/// # }
 /// # }
 /// ```
 ///

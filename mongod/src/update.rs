@@ -9,6 +9,7 @@ use crate::error::Error;
 /// Tying `User` to its `Update`.
 ///
 /// ```
+/// # mod wrapper {
 /// # use mongod_derive::{Bson, Mongo};
 /// use mongod::bson::Document;
 /// use mongod::{AsUpdate, Error, Update};
@@ -48,6 +49,7 @@ use crate::error::Error;
 ///         }
 ///     }
 /// }
+/// # }
 /// ```
 pub trait AsUpdate<U: Update> {
     /// Returns the `Collection`s update.
@@ -102,6 +104,7 @@ pub trait Update {
 /// Unset the age of a user.
 ///
 /// ```no_run
+/// # mod wrapper {
 /// # use mongod_derive::{Bson, Mongo};
 /// use mongod::bson::Document;
 /// use mongod::{AsFilter, AsUpdate, Comparator, Error, Update, Updates};
@@ -167,6 +170,7 @@ pub trait Update {
 ///
 /// let _cursor = client.update::<User, _, _>(filter, updates).await.unwrap();
 /// # Ok(())
+/// # }
 /// # }
 /// ```
 // TODO: Implement the other update operators: https://docs.mongodb.com/manual/reference/operator/update/#id1

@@ -84,6 +84,7 @@ where
 /// Tying `User` to its `Filter`.
 ///
 /// ```
+/// # mod wrapper {
 /// use std::convert::TryFrom;
 ///
 /// # use mongod_derive::{Bson, Mongo};
@@ -127,6 +128,7 @@ where
 ///         }
 ///     }
 /// }
+/// # }
 /// ```
 pub trait AsFilter<T: Filter> {
     /// Returns the `Collection`s filter.
