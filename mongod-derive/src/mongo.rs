@@ -4,7 +4,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::{Ident, Member};
 
-use crate::ast::{attr, Container, Data, Field, Style};
+use crate::ast::{attr, Container, Data, Field, Style, BSON, MONGO};
 use crate::bson::member_to_id;
 
 pub fn expand_derive_mongo(input: &syn::DeriveInput) -> Result<TokenStream, Vec<syn::Error>> {
@@ -258,11 +258,19 @@ fn impl_struct(
                 }
                 let member = &f.member;
                 let id = member_to_id(&f.member);
-                Some(quote! {
+                if f.attrs.serde {
+                    Some(quote! {
                     if let Some(__value) = value.#member {
-                        doc.insert(#id, _mongo::ext::bson::Bson::try_from(__value)?.0);
+                        doc.insert(#id, _mongo::bson::to_bson(&__value)?);
                     }
-                })
+                    })
+                } else {
+                    Some(quote! {
+                        if let Some(__value) = value.#member {
+                            doc.insert(#id, _mongo::ext::bson::Bson::try_from(__value)?.0);
+                        }
+                    })
+                }
             });
             (
                 quote! {
@@ -300,8 +308,20 @@ fn impl_struct(
                 Member::Named(name) => name,
                 _ => panic!("#[derive(Mongo)] can only be derived on named structs"),
             };
-            // Pass the attrs along so we can just derive the bson...
-            let raw_attrs = &f.raw.attrs;
+            // Pass the attrs along so we can just derive the bson... but make sure that local
+            // attrs are stripped!
+            let raw_attrs = &f
+                .raw
+                .attrs
+                .iter()
+                .filter_map(|a| {
+                    if a.path.is_ident(BSON) || a.path.is_ident(MONGO) {
+                        None
+                    } else {
+                        Some(a)
+                    }
+                })
+                .collect::<Vec<_>>();
             if attrs.bson == attr::BsonMode::Serde {
                 Some(quote! {
                     #(#raw_attrs),*
