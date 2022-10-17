@@ -1,6 +1,6 @@
 [package]
 name = "mongod"
-version = "0.3.2"
+version = "0.3.3"
 authors = [
   "Alex Kornitzer <alex.kornitzer@countercept.com>",
 ]
@@ -21,14 +21,14 @@ chrono = { version = "0.4", optional = true, features = ["serde"] }
 futures = "0.3"
 log = "0.4"
 mongodb = "2.0.0-beta.3"
-mongod-derive = { version = "=0.3.2", optional = true, path = "../mongod-derive" }
+mongod-derive = { version = "=0.3.3", optional = true, path = "../mongod-derive" }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.0", default-features = false }
 url = "2.2"
 
 
 [dev-dependencies]
-mongod-derive = { version = "0.3.2", path = "../mongod-derive" }
+mongod-derive = { version = "0.3.3", path = "../mongod-derive" }
 
 
 [features]
