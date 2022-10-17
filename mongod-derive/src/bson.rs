@@ -181,7 +181,7 @@ fn impl_enum_struct(
             #[automatically_derived]
             impl TryFrom<#name> for _mongo::bson::Bson {
                 type Error = _mongo::ext::bson::ser::Error;
-                fn try_from(value: #name) -> Result<Self, Self::Error> {
+                fn try_from(value: #name) -> core::result::Result<Self, Self::Error> {
                     let mut doc = _mongo::bson::Document::new();
                     match value {
                         #(#try_from_collection_fields),*
@@ -200,7 +200,7 @@ fn impl_enum_struct(
             #[automatically_derived]
             impl TryFrom<_mongo::bson::Bson> for #name {
                 type Error = _mongo::ext::bson::de::Error;
-                fn try_from(bson: _mongo::bson::Bson) -> Result<Self, Self::Error> {
+                fn try_from(bson: _mongo::bson::Bson) -> core::result::Result<Self, Self::Error> {
                     let mut doc = match bson {
                         _mongo::bson::Bson::Document(doc) => doc,
                         _ => return Err(_mongo::bson::de::Error::custom(
@@ -260,7 +260,7 @@ fn impl_enum_unit(
             #[automatically_derived]
             impl TryFrom<#name> for _mongo::bson::Bson {
                 type Error = _mongo::ext::bson::ser::Error;
-                fn try_from(value: #name) -> Result<Self, Self::Error> {
+                fn try_from(value: #name) -> core::result::Result<Self, Self::Error> {
                     let v = match value {
                         #(#try_from_collection_fields),*
                     };
@@ -279,7 +279,7 @@ fn impl_enum_unit(
             #[automatically_derived]
             impl TryFrom<_mongo::bson::Bson> for #name {
                 type Error = _mongo::ext::bson::de::Error;
-                fn try_from(bson: _mongo::bson::Bson) -> Result<Self, Self::Error> {
+                fn try_from(bson: _mongo::bson::Bson) -> core::result::Result<Self, Self::Error> {
                     let value = match bson {
                         _mongo::bson::Bson::String(s) => s,
                         _ => return Err(_mongo::bson::de::Error::custom(
@@ -334,7 +334,7 @@ fn impl_struct(
             #[automatically_derived]
             impl TryFrom<#name> for _mongo::bson::Bson {
                 type Error = _mongo::ext::bson::ser::Error;
-                fn try_from(value: #name) -> Result<Self, Self::Error> {
+                fn try_from(value: #name) -> core::result::Result<Self, Self::Error> {
                     let mut doc = _mongo::bson::Document::new();
                     #(#try_from_collection_fields)*
                     Ok(_mongo::bson::Bson::Document(doc))
@@ -381,7 +381,7 @@ fn impl_struct(
             #[automatically_derived]
             impl TryFrom<_mongo::bson::Bson> for #name {
                 type Error = _mongo::ext::bson::de::Error;
-                fn try_from(bson: _mongo::bson::Bson) -> Result<Self, Self::Error> {
+                fn try_from(bson: _mongo::bson::Bson) -> core::result::Result<Self, Self::Error> {
                     let mut doc = match bson {
                         _mongo::bson::Bson::Document(doc) => doc,
                         _ => return Err(_mongo::bson::de::Error::custom(
@@ -474,7 +474,7 @@ fn try_from_ext_bson_to_type(name: &Ident) -> TokenStream {
         #[automatically_derived]
         impl TryFrom<_mongo::ext::bson::Bson> for #name {
             type Error = _mongo::ext::bson::de::Error;
-            fn try_from(bson: _mongo::ext::bson::Bson) -> Result<Self, Self::Error> {
+            fn try_from(bson: _mongo::ext::bson::Bson) -> core::result::Result<Self, Self::Error> {
                 Self::try_from(bson.0)
             }
         }
@@ -486,7 +486,7 @@ fn try_from_type_to_ext_bson(name: &Ident) -> TokenStream {
         #[automatically_derived]
         impl TryFrom<#name> for _mongo::ext::bson::Bson {
             type Error = _mongo::ext::bson::ser::Error;
-            fn try_from(value: #name) -> Result<Self, Self::Error> {
+            fn try_from(value: #name) -> core::result::Result<Self, Self::Error> {
                 Ok(_mongo::ext::bson::Bson(_mongo::bson::Bson::try_from(value)?))
             }
         }

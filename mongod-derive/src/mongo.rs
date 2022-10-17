@@ -81,11 +81,11 @@ fn impl_struct(
             impl _mongo::Collection for #name {
                 const COLLECTION: &'static str = #col;
 
-                fn from_document(document: _mongo::bson::Document) -> Result<Self, _mongo::Error> {
+                fn from_document(document: _mongo::bson::Document) -> core::result::Result<Self, _mongo::Error> {
                     #from
                 }
 
-                fn into_document(self) -> Result<_mongo::bson::Document, _mongo::Error> {
+                fn into_document(self) -> core::result::Result<_mongo::bson::Document, _mongo::Error> {
                     #into
                     match b {
                         _mongo::bson::Bson::Document(doc) => Ok(doc),
@@ -198,7 +198,7 @@ fn impl_struct(
             #[automatically_derived]
             impl TryFrom<Filter> for _mongo::bson::Bson {
                 type Error = _mongo::ext::bson::ser::Error;
-                fn try_from(value: Filter) -> Result<Self, Self::Error> {
+                fn try_from(value: Filter) -> core::result::Result<Self, Self::Error> {
                     let mut doc = _mongo::bson::Document::new();
                     #(#into_bson)*
                     Ok(_mongo::bson::Bson::Document(doc))
@@ -207,7 +207,7 @@ fn impl_struct(
             #[automatically_derived]
             impl TryFrom<Filter> for _mongo::ext::bson::Bson {
                 type Error = _mongo::ext::bson::ser::Error;
-                fn try_from(value: Filter) -> Result<Self, Self::Error> {
+                fn try_from(value: Filter) -> core::result::Result<Self, Self::Error> {
                     Ok(_mongo::ext::bson::Bson(_mongo::bson::Bson::try_from(value)?))
                 }
             }
@@ -216,7 +216,7 @@ fn impl_struct(
                 fn new() -> Self {
                     Self::default()
                 }
-                fn into_document(self) -> Result<_mongo::bson::Document, _mongo::Error> {
+                fn into_document(self) -> core::result::Result<_mongo::bson::Document, _mongo::Error> {
                     let b = _mongo::bson::Bson::try_from(self).map_err(_mongo::Error::invalid_document)?;
                     match b {
                         _mongo::bson::Bson::Document(doc) => Ok(doc),
@@ -280,7 +280,7 @@ fn impl_struct(
                     #[automatically_derived]
                     impl TryFrom<Update> for _mongo::bson::Bson {
                         type Error = _mongo::ext::bson::ser::Error;
-                        fn try_from(value: Update) -> Result<Self, Self::Error> {
+                        fn try_from(value: Update) -> core::result::Result<Self, Self::Error> {
                             let mut doc = _mongo::bson::Document::new();
                             #(#into_bson)*
                             Ok(_mongo::bson::Bson::Document(doc))
@@ -289,7 +289,7 @@ fn impl_struct(
                     #[automatically_derived]
                     impl TryFrom<Update> for _mongo::ext::bson::Bson {
                         type Error = _mongo::ext::bson::ser::Error;
-                        fn try_from(value: Update) -> Result<Self, Self::Error> {
+                        fn try_from(value: Update) -> core::result::Result<Self, Self::Error> {
                             Ok(_mongo::ext::bson::Bson(_mongo::bson::Bson::try_from(value)?))
                         }
                     }
@@ -359,7 +359,7 @@ fn impl_struct(
                 fn new() -> Self {
                     Self::default()
                 }
-                fn into_document(self) -> Result<_mongo::bson::Document, _mongo::Error> {
+                fn into_document(self) -> core::result::Result<_mongo::bson::Document, _mongo::Error> {
                     #into
                     match b {
                         _mongo::bson::Bson::Document(doc) => Ok(doc),
