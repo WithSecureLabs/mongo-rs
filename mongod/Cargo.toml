@@ -16,7 +16,7 @@ readme = "../README.md"
 all-features = true
 
 [dependencies]
-bson = { version = "2.0.0-beta.3", features = ["chrono-0_4", "u2i"] }
+bson = { version = "2.4", features = ["chrono-0_4", "uuid-0_8"] }
 chrono = { version = "0.4", optional = true, features = ["serde"] }
 futures = "0.3"
 log = "0.4"
