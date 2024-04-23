@@ -16,11 +16,11 @@ readme = "../README.md"
 all-features = true
 
 [dependencies]
-bson = { version = "2.4", features = ["chrono-0_4", "uuid-0_8"] }
+bson = { version = "2.4", features = ["chrono-0_4", "uuid-1"] }
 chrono = { version = "0.4", optional = true, features = ["serde"] }
 futures = "0.3"
 log = "0.4"
-mongodb = "2.0.0-beta.3"
+mongodb = "2.0.0"
 mongod-derive = { version = "=0.3.3", optional = true, path = "../mongod-derive" }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.0", default-features = false }
