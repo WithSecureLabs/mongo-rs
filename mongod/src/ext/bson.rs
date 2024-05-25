@@ -137,6 +137,25 @@ wrap_bson_from!([u8; 12]);
 #[cfg(feature = "chrono")]
 wrap_bson_from!(chrono::DateTime<chrono::Utc>);
 
+macro_rules! wrap_try_from_bson {
+    ($source:ty) => {
+        impl TryFrom<Bson> for $source {
+            type Error = de::Error;
+            fn try_from(value: Bson) -> Result<Self, Self::Error> {
+                Ok(bson::from_bson(value.0).map_err(bson::de::Error::custom)?)
+            }
+        }
+    };
+}
+wrap_try_from_bson!(bson::Binary);
+wrap_try_from_bson!(bson::Bson);
+wrap_try_from_bson!(bson::DbPointer);
+wrap_try_from_bson!(bson::Document);
+wrap_try_from_bson!(bson::JavaScriptCodeWithScope);
+wrap_try_from_bson!(bson::oid::ObjectId);
+wrap_try_from_bson!(bson::Regex);
+wrap_try_from_bson!(bson::Timestamp);
+
 impl From<char> for Bson {
     fn from(c: char) -> Self {
         Bson(bson::Bson::String(c.into()))
