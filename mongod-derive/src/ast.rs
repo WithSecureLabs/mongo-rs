@@ -192,8 +192,7 @@ fn struct_from(fields: &syn::Fields) -> Result<(Style, Vec<Field<'_>>), Vec<syn:
 pub mod attr {
     use super::*;
 
-    use syn::Meta::{List, NameValue, Path};
-    use syn::NestedMeta::{Lit, Meta};
+    use syn::meta::ParseNestedMeta;
 
     #[derive(PartialEq)]
     pub enum BsonMode {
@@ -242,53 +241,56 @@ pub mod attr {
             let mut oid = false;
             let mut update = false;
 
-            for meta in item
-                .attrs
-                .iter()
-                .flat_map(|attr| get_bson_meta_items(attr))
-                .flatten()
-            {
-                match &meta {
-                    // Parse `#[bson(from)]`
-                    Meta(Path(word)) if word.is_ident(FROM) => {
-                        from = true;
-                    }
-                    // Parse `#[bson(into)]`
-                    Meta(Path(word)) if word.is_ident(INTO) => {
-                        into = true;
-                    }
+            for attr in &item.attrs {
+                if !attr.path().is_ident(BSON) {
+                    continue;
+                }
 
-                    Meta(item) => {
-                        let path = item.path().into_token_stream().to_string().replace(' ', "");
-                        errors.push(syn::Error::new_spanned(
-                            item.path(),
+                if let syn::Meta::List(meta) = &attr.meta {
+                    if meta.tokens.is_empty() {
+                        continue;
+                    }
+                }
+
+                if let Err(err) = attr.parse_nested_meta(|meta| {
+                    // Parse `#[bson(from)]`
+                    if meta.path.is_ident(FROM) {
+                        from = true;
+                    // Parse `#[bson(from)]`
+                    } else if meta.path.is_ident(INTO) {
+                        into = true;
+                    } else {
+                        let path = meta.path.to_token_stream().to_string().replace(' ', "");
+                        return Err(syn::Error::new_spanned(
+                            meta.path,
                             format!("unknown bson container attribute `{}`", path),
                         ));
                     }
-
-                    Lit(lit) => {
-                        errors.push(syn::Error::new_spanned(
-                            lit,
-                            "unexpected literal in bson container attribute",
-                        ));
-                    }
+                    Ok(())
+                }) {
+                    errors.push(err);
                 }
             }
 
-            for meta in item
-                .attrs
-                .iter()
-                .flat_map(|attr| get_mongo_meta_items(attr))
-                .flatten()
-            {
-                match &meta {
+            for attr in &item.attrs {
+                if !attr.path().is_ident(MONGO) {
+                    continue;
+                }
+
+                if let syn::Meta::List(meta) = &attr.meta {
+                    if meta.tokens.is_empty() {
+                        continue;
+                    }
+                }
+
+                if let Err(err) = attr.parse_nested_meta(|meta| {
                     // Parse `#[mongo(bson = "convert")]`
-                    Meta(NameValue(m)) if m.path.is_ident(BSON) => {
-                        match get_lit_str(BSON, &m.lit) {
+                    if meta.path.is_ident(BSON) {
+                        match get_lit_str(BSON, &meta) {
                             Ok(s) => match str::parse::<BsonMode>(&s.value()) {
                                 Ok(x) => bson = x,
                                 Err(_) => errors.push(syn::Error::new_spanned(
-                                    m.path.clone(),
+                                    meta.path.clone(),
                                     format!(
                                         "unknown mongo container attribute value `{}`",
                                         s.value()
@@ -297,47 +299,37 @@ pub mod attr {
                             },
                             Err(e) => errors.push(e),
                         }
-                    }
                     // Parse `#[mongo(collection = "foo")]`
-                    Meta(NameValue(m)) if m.path.is_ident(COLLECTION) => {
-                        match get_lit_str(COLLECTION, &m.lit) {
+                    } else if meta.path.is_ident(COLLECTION) {
+                        match get_lit_str(COLLECTION, &meta) {
                             Ok(s) => collection = Some(s.value()),
                             Err(e) => errors.push(e),
                         }
-                    }
                     // Parse `#[mongo(field)]`
-                    Meta(Path(word)) if word.is_ident(FIELD) => {
+                    } else if meta.path.is_ident(FIELD) {
                         field = true;
-                    }
                     // Parse `#[mongo(filter)]`
-                    Meta(Path(word)) if word.is_ident(FILTER) => {
+                    } else if meta.path.is_ident(FILTER) {
                         filter = true;
-                    }
-                    // Parse `#[mongo(oid)]`
-                    Meta(Path(word)) if word.is_ident(OID) => {
+                        // Parse `#[mongo(oid)]`
+                    } else if meta.path.is_ident(OID) {
                         oid = true;
-                    }
                     // Parse `#[mongo(update)]`
-                    Meta(Path(word)) if word.is_ident(UPDATE) => {
+                    } else if meta.path.is_ident(UPDATE) {
                         update = true;
-                    }
-
-                    Meta(item) => {
-                        let path = item.path().into_token_stream().to_string().replace(' ', "");
-                        errors.push(syn::Error::new_spanned(
-                            item.path(),
+                    } else {
+                        let path = meta.path.to_token_stream().to_string().replace(' ', "");
+                        return Err(syn::Error::new_spanned(
+                            meta.path,
                             format!("unknown mongo container attribute `{}`", path),
                         ));
                     }
-
-                    Lit(lit) => {
-                        errors.push(syn::Error::new_spanned(
-                            lit,
-                            "unexpected literal in mongo container attribute",
-                        ));
-                    }
+                    Ok(())
+                }) {
+                    errors.push(err);
                 }
             }
+
             if !from && !into {
                 from = true;
                 into = true;
@@ -365,65 +357,64 @@ pub mod attr {
             let mut serde = false;
             let mut skip = false;
 
-            for meta in field
-                .attrs
-                .iter()
-                .flat_map(|attr| get_bson_meta_items(attr))
-                .flatten()
-            {
-                match &meta {
-                    // Parse `#[bson(serde)]`
-                    Meta(Path(word)) if word.is_ident(SERDE) => {
-                        serde = true;
-                    }
+            for attr in &field.attrs {
+                if !attr.path().is_ident(BSON) {
+                    continue;
+                }
 
-                    Meta(item) => {
-                        let path = item.path().into_token_stream().to_string().replace(' ', "");
-                        errors.push(syn::Error::new_spanned(
-                            item.path(),
+                if let syn::Meta::List(meta) = &attr.meta {
+                    if meta.tokens.is_empty() {
+                        continue;
+                    }
+                }
+
+                if let Err(err) = attr.parse_nested_meta(|meta| {
+                    // Parse `#[bson(serde)]`
+                    if meta.path.is_ident(SERDE) {
+                        serde = true;
+                    } else {
+                        let path = meta.path.to_token_stream().to_string().replace(' ', "");
+                        return Err(syn::Error::new_spanned(
+                            meta.path,
                             format!("unknown bson field attribute `{}`", path),
                         ));
                     }
 
-                    Lit(lit) => {
-                        errors.push(syn::Error::new_spanned(
-                            lit,
-                            "unexpected literal in bson field attribute",
-                        ));
-                    }
+                    Ok(())
+                }) {
+                    errors.push(err);
                 }
             }
 
-            for meta in field
-                .attrs
-                .iter()
-                .flat_map(|attr| get_mongo_meta_items(attr))
-                .flatten()
-            {
-                match &meta {
-                    // Parse `#[mongo(serde)]`
-                    Meta(Path(word)) if word.is_ident(SERDE) => {
-                        serde = true;
-                    }
-                    // Parse `#[mongo(skip)]`
-                    Meta(Path(word)) if word.is_ident(SKIP) => {
-                        skip = true;
-                    }
+            for attr in &field.attrs {
+                if !attr.path().is_ident(MONGO) {
+                    continue;
+                }
 
-                    Meta(item) => {
-                        let path = item.path().into_token_stream().to_string().replace(' ', "");
-                        errors.push(syn::Error::new_spanned(
-                            item.path(),
+                if let syn::Meta::List(meta) = &attr.meta {
+                    if meta.tokens.is_empty() {
+                        continue;
+                    }
+                }
+
+                if let Err(err) = attr.parse_nested_meta(|meta| {
+                    // Parse `#[mongo(serde)]`
+                    if meta.path.is_ident(SERDE) {
+                        serde = true;
+                    // Parse `#[mongo(skip)]`
+                    } else if meta.path.is_ident(SKIP) {
+                        skip = true;
+                    } else {
+                        let path = meta.path.to_token_stream().to_string().replace(' ', "");
+                        return Err(syn::Error::new_spanned(
+                            meta.path,
                             format!("unknown mongo field attribute `{}`", path),
                         ));
                     }
 
-                    Lit(lit) => {
-                        errors.push(syn::Error::new_spanned(
-                            lit,
-                            "unexpected literal in mongo field attribute",
-                        ));
-                    }
+                    Ok(())
+                }) {
+                    errors.push(err);
                 }
             }
 
@@ -442,50 +433,34 @@ pub mod attr {
 
     pub fn get_lit_str<'a>(
         attr_name: &'static str,
-        lit: &'a syn::Lit,
-    ) -> Result<&'a syn::LitStr, syn::Error> {
-        if let syn::Lit::Str(lit) = lit {
-            Ok(lit)
+        meta: &ParseNestedMeta,
+    ) -> Result<syn::LitStr, syn::Error> {
+        let expr: syn::Expr = meta.value()?.parse()?;
+        let mut value = &expr;
+        while let syn::Expr::Group(e) = value {
+            value = &e.expr;
+        }
+        if let syn::Expr::Lit(syn::ExprLit {
+            lit: syn::Lit::Str(lit),
+            ..
+        }) = value
+        {
+            let suffix = lit.suffix();
+            if !suffix.is_empty() {
+                return Err(syn::Error::new_spanned(
+                    lit,
+                    format!("unexpected suffix `{}` on string literal", suffix),
+                ));
+            }
+            Ok(lit.clone())
         } else {
             Err(syn::Error::new_spanned(
-                lit,
+                expr,
                 format!(
                     "expected mongo {} attribute to be a string: `{} = \"...\"`",
                     attr_name, attr_name
                 ),
             ))
-        }
-    }
-
-    pub fn get_bson_meta_items(
-        attr: &syn::Attribute,
-    ) -> Result<Vec<syn::NestedMeta>, Vec<syn::Error>> {
-        if !attr.path.is_ident(BSON) {
-            return Ok(Vec::new());
-        }
-        match attr.parse_meta() {
-            Ok(List(meta)) => Ok(meta.nested.into_iter().collect()),
-            Ok(other) => Err(vec![syn::Error::new_spanned(
-                other.into_token_stream(),
-                "expected #[bson(...)]",
-            )]),
-            Err(err) => Err(vec![err]),
-        }
-    }
-
-    pub fn get_mongo_meta_items(
-        attr: &syn::Attribute,
-    ) -> Result<Vec<syn::NestedMeta>, Vec<syn::Error>> {
-        if !attr.path.is_ident(MONGO) {
-            return Ok(Vec::new());
-        }
-        match attr.parse_meta() {
-            Ok(List(meta)) => Ok(meta.nested.into_iter().collect()),
-            Ok(other) => Err(vec![syn::Error::new_spanned(
-                other.into_token_stream(),
-                "expected #[mongo(...)]",
-            )]),
-            Err(err) => Err(vec![err]),
         }
     }
 }

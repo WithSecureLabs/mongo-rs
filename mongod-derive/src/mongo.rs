@@ -341,7 +341,7 @@ fn impl_struct(
                 .attrs
                 .iter()
                 .filter_map(|a| {
-                    if a.path.is_ident(BSON) || a.path.is_ident(MONGO) {
+                    if a.path().is_ident(BSON) || a.path().is_ident(MONGO) {
                         None
                     } else {
                         Some(a)
