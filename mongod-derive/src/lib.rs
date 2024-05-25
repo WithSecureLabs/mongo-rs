@@ -133,6 +133,7 @@ pub fn derive_bson(input: TokenStream) -> TokenStream {
 /// - `#[mongo(collection = "...")]`: derives the `Collection` trait
 /// - `#[mongo(field)]`: derives the `AsField` & `Field` traits
 /// - `#[mongo(filter)]`: derives the `AsFilter` & `Filter` traits
+/// - `#[mongo(oid)]`: derives the `_id` field for derived `Field` traits
 /// - `#[mongo(update)]`: derives the `AsUpdate` & `Update` traits
 ///
 /// ### `#[mongo(collection = "...")]`
@@ -184,6 +185,27 @@ pub fn derive_bson(input: TokenStream) -> TokenStream {
 /// # #[derive(mongod_derive::Bson)]
 /// #[derive(Mongo)]
 /// #[mongo(filter)]
+/// pub struct User {
+///     name: String,
+///     age: u32,
+/// }
+///
+/// // The derived filter struct can be exposed from the derived module which uses the type's name in
+/// // snake_case
+/// use self::user::Filter;
+/// # }
+/// ```
+///
+/// ### `#[mongo(oid)]`
+///
+/// Tells the derive to implement the `_id` field for derived `Filter` traits.
+///
+/// ```
+/// # mod wrap {
+/// # use mongod_derive::Mongo;
+/// # #[derive(mongod_derive::Bson)]
+/// #[derive(Mongo)]
+/// #[mongo(filter, oid)]
 /// pub struct User {
 ///     name: String,
 ///     age: u32,

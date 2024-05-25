@@ -8,6 +8,7 @@ pub const FILTER: &str = "filter";
 pub const FROM: &str = "from";
 pub const INTO: &str = "into";
 pub const MONGO: &str = "mongo";
+pub const OID: &str = "oid";
 pub const SERDE: &str = "serde";
 pub const SKIP: &str = "skip";
 pub const UPDATE: &str = "update";
@@ -219,6 +220,7 @@ pub mod attr {
         pub filter: bool,
         pub from: bool,
         pub into: bool,
+        pub oid: bool,
         pub update: bool,
     }
     pub struct Field {
@@ -237,6 +239,7 @@ pub mod attr {
             let mut filter = false;
             let mut from = false;
             let mut into = false;
+            let mut oid = false;
             let mut update = false;
 
             for meta in item
@@ -310,6 +313,10 @@ pub mod attr {
                     Meta(Path(word)) if word.is_ident(FILTER) => {
                         filter = true;
                     }
+                    // Parse `#[mongo(oid)]`
+                    Meta(Path(word)) if word.is_ident(OID) => {
+                        oid = true;
+                    }
                     // Parse `#[mongo(update)]`
                     Meta(Path(word)) if word.is_ident(UPDATE) => {
                         update = true;
@@ -345,6 +352,7 @@ pub mod attr {
                 filter,
                 from,
                 into,
+                oid,
                 update,
             })
         }

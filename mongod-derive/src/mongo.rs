@@ -189,10 +189,34 @@ fn impl_struct(
                 #name: Some(_mongo::Comparator::Eq(#inner))
             })
         });
+        let filter_field_oid = if attrs.oid {
+            quote! {
+                pub _id: Option<_mongo::Comparator<_mongo::bson::oid::ObjectId>>,
+            }
+        } else {
+            quote! {}
+        };
+        let into_bson_oid = if attrs.oid {
+            quote! {
+                if let Some(__value) = value._id {
+                    doc.insert("_id", _mongo::ext::bson::Bson::try_from(__value)?.0);
+                }
+            }
+        } else {
+            quote! {}
+        };
+        let into_filter_oid = if attrs.oid {
+            quote! {
+                _id: None,
+            }
+        } else {
+            quote! {}
+        };
         quote! {
             #[automatically_derived]
             #[derive(Default)]
             pub struct Filter {
+                #filter_field_oid
                 #(#filter_fields),*
             }
             #[automatically_derived]
@@ -200,6 +224,7 @@ fn impl_struct(
                 type Error = _mongo::ext::bson::ser::Error;
                 fn try_from(value: Filter) -> core::result::Result<Self, Self::Error> {
                     let mut doc = _mongo::bson::Document::new();
+                    #into_bson_oid
                     #(#into_bson)*
                     Ok(_mongo::bson::Bson::Document(doc))
                 }
@@ -231,6 +256,7 @@ fn impl_struct(
                 }
                 fn into_filter(self) -> Filter {
                     Filter {
+                        #into_filter_oid
                         #(#into_filter),*
                     }
                 }
