@@ -340,13 +340,7 @@ fn impl_struct(
                 .raw
                 .attrs
                 .iter()
-                .filter_map(|a| {
-                    if a.path().is_ident(BSON) || a.path().is_ident(MONGO) {
-                        None
-                    } else {
-                        Some(a)
-                    }
-                })
+                .filter(|a| !(a.path().is_ident(BSON) || a.path().is_ident(MONGO)))
                 .collect::<Vec<_>>();
             if attrs.bson == attr::BsonMode::Serde {
                 Some(quote! {

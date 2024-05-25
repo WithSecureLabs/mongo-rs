@@ -431,7 +431,7 @@ pub mod attr {
         }
     }
 
-    pub fn get_lit_str<'a>(
+    pub fn get_lit_str(
         attr_name: &'static str,
         meta: &ParseNestedMeta,
     ) -> Result<syn::LitStr, syn::Error> {
