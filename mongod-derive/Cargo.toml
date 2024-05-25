@@ -1,6 +1,6 @@
 [package]
 name = "mongod-derive"
-version = "0.3.4"
+version = "0.3.5"
 authors = ["Alex Kornitzer <alex.kornitzer@countercept.com>"]
 edition = "2018"
 description = "An abstraction layer on mongodb"
@@ -17,7 +17,7 @@ quote = "1.0"
 syn = "2.0"
 
 [dev-dependencies]
-mongod = { version = "0.3.4", path = "../mongod" }
+mongod = { version = "0.3.5", path = "../mongod" }
 
 [lib]
 proc-macro = true
