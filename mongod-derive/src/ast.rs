@@ -18,9 +18,6 @@ pub struct Container<'a> {
 
     pub attrs: attr::Container,
     pub data: Data<'a>,
-    pub generics: &'a syn::Generics,
-
-    pub raw: &'a syn::DeriveInput,
 }
 
 pub enum Data<'a> {
@@ -31,11 +28,8 @@ pub enum Data<'a> {
 pub struct Variant<'a> {
     pub ident: syn::Ident,
 
-    pub attrs: attr::Variant,
     pub fields: Vec<Field<'a>>,
     pub style: Style,
-
-    pub raw: &'a syn::Variant,
 }
 
 pub struct Field<'a> {
@@ -95,8 +89,6 @@ impl<'a> Container<'a> {
             ident: input.ident.clone(),
             attrs: attrs.expect("could not get attributes"),
             data: data.expect("could not get data"),
-            generics: &input.generics,
-            raw: input,
         })
     }
 }
@@ -128,10 +120,8 @@ fn enum_from(
             let (style, fields) = data.expect("could not get data");
             Some(Variant {
                 ident: v.ident.clone(),
-                attrs: attrs.expect("could not get attributes"),
                 fields,
                 style,
-                raw: v,
             })
         })
         .collect();
