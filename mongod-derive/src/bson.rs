@@ -19,14 +19,9 @@ pub fn expand_derive_bson(input: &syn::DeriveInput) -> Result<TokenStream, Vec<s
         Data::Enum(variants) => impl_enum(&container.ident, variants, &container.attrs),
     };
 
-    let namespace = Ident::new(
-        &format!("_IMPL_BSON_FOR_{}", container.ident),
-        input.ident.span(),
-    );
-
     Ok(quote! {
         #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
-        const #namespace: () = {
+        const _: () = {
             extern crate mongod as _mongo;
 
             use std::convert::{TryFrom, TryInto};
